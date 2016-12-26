@@ -1,0 +1,23 @@
+<html>
+<head>
+ <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+ 
+</head>
+<body>
+
+<script>
+
+    $.ajax({
+	 type: "POST",
+  dataType: 'html',
+        crossOrigin: true,
+        url: 'http://www.pcsolotteryresults.com/swertres-results/swertres-result-july-8-2016',
+        success: function(data) {
+            console.log(data);
+        }
+    });
+
+</script>
+
+</body>
+</html>
