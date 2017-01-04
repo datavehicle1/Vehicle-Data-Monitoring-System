@@ -141,9 +141,21 @@ input#vehicle_ID {text-transform: uppercase;}
 <script>
 //function input only alphanumeric
 $( function() {
-    $( document ).tooltip();
+
+   $(document).ready(function () {
+    $(document).tooltip({
+        show: {
+            effect: 'slideDown'
+        },
+        track: true,
+        open: function (event, ui) {
+            setTimeout(function () {
+                $(ui.tooltip).hide('fade');
+            }, 2000);
+        }
+    });
+});	
   } );
-  
   
 $(function(){
     $("#vehicle_ID").keypress(function(event){
