@@ -4,15 +4,15 @@
 <link rel="shortcut icon" type="image/png" href="https://publicdomainvectors.org/photos/1381989347.png" />
 <style>
 
-#vehicle_ID{  top: 30px ; left: 400px ; position: absolute; font-family: Arial, Helvetica, sans-serif;}
-
-#VINcss{  top: 55px ; left: 430px ; position: absolute; font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
 
 
-.ui-datepicker-trigger {  top: 3px ; left: 135px ; position: absolute; }
+#vehicle_ID{ font-family: Arial, Helvetica, sans-serif;}
 
-#pickdate {  top: 95px ; left: 100px ; position: absolute; font-family: Arial, Helvetica, sans-serif;}
-#container{width: 860px; height: 380px; top: 140px ; left: 100px ; position: absolute; border: 1px solid black}
+#VINcss{  font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
+
+
+.ui-datepicker-trigger{padding: 5px;}
+
 
 #startLoadButton {
   display: inline-block;
@@ -28,8 +28,7 @@
   cursor: pointer;
   margin: 5px;
 
-vertical-align:middle; position: absolute; top: 70px; left:385px;
-  
+ 
 }
 
 #startLoadButton  span {
@@ -77,38 +76,75 @@ vertical-align:middle; position: absolute; top: 70px; left:385px;
 input#vehicle_ID {text-transform: uppercase;}
 
 
+.event a {
+    background-color: #42B373 !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
 
 </style>
 
 <head>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
 
 
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
 
  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/3.6.1/firebase.js"></script>
- <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
 
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 </head>
 <body>
 
-<button id='startLoadButton' onclick="disableButton()"><span>Load Vehicle Data</span></button>
 
-<div id="graphArea">
- <input type="text" id="vehicle_ID" onchange="enableButton()" style="width:157px;" maxlength="17" value="123334A">
-  <label id="VINcss">Vehicle ID number</label>
-<p id="pickdate">Date: <input type="text"id="datepicker" style="width:80px;"  readonly></p>
 
-<div id="container">
+
+ <div class="w3-center w3-padding-4" >
+ <input type="text" id="vehicle_ID"  onchange="enableButton()" style="width:157px;" maxlength="17" value="123334A" title="1st choose a date by clicking the (Calendar Button) then select hours on the (Dropdown Box) then click (Load Vehicle Data)">
+ </div>
+ <div class="w3-center">
+ <label id="VINcss" class="w3-center">Vehicle ID number</label>
+ </div>
+  
+  <div class="w3-center">
+<button id='startLoadButton' onclick="disableButton()" title="select a valid Date first before clicking this button else no data will be loaded"><span>Load Vehicle Data</span></button>
+
+</div>
+
+ 
+   <div class="w3-container w3-light-gray w3-padding-4">
+
+<label>Date: </label> <input   type="text" id="datepicker" onchange="loadHours()" style="width:100px;" readonly>
+
+<select id="dataHours" class="w3-navbar w3-light-grey" title="select Hours"></select>
+
+<button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
+
+
+</div>
+
+
+
+<div class="w3-padding-tiny">
+<div id="container" >
 </div>
 </div>
 
 <script>
 //function input only alphanumeric
+$( function() {
+    $( document ).tooltip();
+  } );
+  
+  
 $(function(){
     $("#vehicle_ID").keypress(function(event){
         var ew = event.which;
@@ -133,83 +169,23 @@ function enableButton()
 document.getElementById("startLoadButton").disabled=false;
 }
 
+
 //get date now
+var VIN=$("#vehicle_ID").val();
+
 var d = new Date();
 
 var month = d.getMonth()+1;
 var day = d.getDate();
+var year=d.getFullYear();
+var hours = (("0" + d.getHours()).slice(-2));
 
-var output =  ((''+month).length<2 ? '0' : '') + month + '/' + ((''+day).length<2 ? '0' : '') + day +'/'+ d.getFullYear();
+var output =  ((''+month).length<2 ? '0' : '') + month + '/' + ((''+day).length<2 ? '0' : '') + day +'/'+ year;
  
  document.getElementById("datepicker").value=output;
 
 
-//calendar
-   $( function() {
-    $( "#datepicker" ).datepicker({
-      showOn: "button",
-      buttonImage: "https://jqueryui.com/resources/demos/datepicker/images/calendar.gif",
-      buttonImageOnly: true,
-      buttonText: "Select date"
-    });
-  } );
-
-function loadGraph(){
-  
- var i=0;
-var timex = new Array();
-	  
-
-  
-$(function () {
-  var chart=  Highcharts.chart('container', {
-        title: {
-            text: 'Vehicle Data',
-            x: -20 //center
-        },
-        subtitle: {
-            text: 'firebase Data',
-            x: -20
-        },
-        xAxis: {
-            name: 'Time',
-			 categories: [],
-        },
-        yAxis: {
-            title: {
-                text: 'Data'
-            },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        
-        legend: {
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'middle',
-            borderWidth: 0
-        },
-        series: [{
-            name: 'Speed',
-            data: [],
-			
-			tooltip: {valueSuffix: 'km/h'}
-        }, {
-            name: 'Rpm',
-            data: [],
-			
-			tooltip: {valueSuffix: 'rpm'}
-        
-        }]
-		
-		
-		
-    });
-	
-	//-------------------------------------------------Firebase------------------//
+	//-------------------------------------------------Firebase Initialization-------------//
 	  var config = {
     apiKey: "AIzaSyDA5QUaEsUGQ9mKLflWzFqXpFCrFoyhEog",
     authDomain: "cloud-based-vehicle-data.firebaseapp.com",
@@ -218,67 +194,225 @@ $(function () {
     messagingSenderId: "945520281616"
   };
   firebase.initializeApp(config);
-  
  
-  var VIN=$("#vehicle_ID").val();
+ var eventDates = {};// eventDates[ new Date( '12/04/2014' )] = new Date( '12/04/2014' );
+//load days with data
+ $( function() {  
+  var refYear = firebase.database().ref("ID/"+VIN);
+ refYear.on("child_added", function(snapshot) {
+    var getYear = snapshot.key;
+	
+	var refMonth = firebase.database().ref("ID/"+VIN+"/"+getYear);
+ refMonth.on("child_added", function(snapshot) {
+    var getMonth = snapshot.key;
+	
+	var refDay = firebase.database().ref("ID/"+VIN+"/"+getYear+"/"+getMonth);
+ refDay.on("child_added", function(snapshot) {
+    var getDay = snapshot.key;
 
- var db = firebase.database();
-var ref = db.ref("ID/"+VIN);
+        eventDates[ new Date( getMonth+"/"+getDay+"/"+getYear )] = new Date( getMonth+"/"+getDay+"/"+getYear ); //highlight Data with dates 
+		
+		
+		
+		}); 
+    });
+   });
+ });
+ 
+
+ //getHours on this Day
+  $( function() {  
+ loadHours();
+ 
+ }); 
+ 
+ 
+ function loadHours(){//get Hours on picked day
+ 
+ $('#dataHours').empty().append();//clear first berfor apppending
+ 
+ var datePick = $("#datepicker").val().split("/");
+
+var yy= datePick[2];
+var mm = datePick[0];
+var dd = datePick[1];
+
+ var refHour= firebase.database().ref("ID/"+VIN+"/"+yy+"/"+mm+"/"+dd);
+ refHour.on("child_added", function(snapshot) {
+    var refHour = snapshot.key;
+	
+	$('#dataHours').append($('<option>', {value: refHour,text: refHour}));
+		
+			}); 
+ 
+ }
+ 
+ //calendar highlight day 
+
+$( function() {
+ 
+        // An array of dates
+     
+        // datepicker
+        $("#datepicker").datepicker({
+		   showOn: "button",
+      buttonImage: "https://jqueryui.com/resources/demos/datepicker/images/calendar.gif",
+      buttonImageOnly: true,
+      buttonText: "Note: A day that contains data are highlighted with green. see December 2016",	   
+	  
+            beforeShowDay: function( date ) {
+
+        var highlight = eventDates[date];
+                if( highlight ) {
+                     return [true, "event", "Contains data"];
+                } else {
+                     return [true, '', ''];
+                }
+             }
+			 
+			
+        });	
+
+    });
+	
+	
+	
+  
+
+  
+  
+  //draw graphArea
+  var dataRpm=[];
+  var dataSpeed=[];
+
+	var chart = new CanvasJS.Chart("container", { 
+
+		title: {
+			text: ""
+		},
+		 legend: {
+            cursor: "pointer",
+            itemclick: function (e) {
+                //console.log("legend click: " + e.dataPointIndex);
+                //console.log(e);
+                if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                    e.dataSeries.visible = false;
+                } else {
+                    e.dataSeries.visible = true;
+                }
+
+                e.chart.render();
+            }
+        },
+		
+		  animationEnabled: true,
+		data: [
+      {        
+        type: "line", yValueFormatString:"####### RPM",showInLegend: true,legendText: "RPM",
+        dataPoints: dataRpm
+      },
+        {        
+        type: "line", yValueFormatString:"####### KmH",showInLegend: true,legendText: "Speed",
+        dataPoints: dataSpeed
+      }
+      ]
+	});
+chart.render();	
+  
+
+	
+
+  
+
+	
+
+
+//-------------------------------------------------Firebase------------------//
+//get Time, Rpm and Speed
+var i=dataRpm.length+1;
+function loadGraph(){
+var datePick = $("#datepicker").val().split("/");
+
+var yy= datePick[2];
+var mm = datePick[0];
+var dd = datePick[1];
+
+
+//var hh = (("0" + dx.getHours()).slice(-2));
+var hh = $( "#dataHours option:selected" ).text();
+
+
+ var VIN=$("#vehicle_ID").val();
+
+var ref = firebase.database().ref("ID/"+VIN+"/"+yy+"/"+mm+"/"+dd+"/"+hh).limitToLast(999);
 
 //get Time, Rpm and Speed
+ ref.on("child_added", function(snapshot) {
+    var getTime = snapshot.key;
+var getRpm=snapshot.child("Rpm").val();  
+var getSpeed=snapshot.child("Speed").val();  
+		
 
-ref.on("child_added", function(snapshot) {
 
-var getTime=snapshot.key; //get Time
+	chart.options.title.text = mm+" - " +dd+ " - "+yy;
+	dataRpm.push({y: getRpm , x:i , label: getTime});
+	dataSpeed.push({y: getSpeed, x:i ,label: getTime});
+	
+i++;
+	if (dataRpm.length > 999)
+      	{
 
-  var ref2 = db.ref("ID/"+VIN+"/"+getTime);
-  ref2.once("value")
-  .then(function(snapshot) {
-  
-  
-   var getRpm =snapshot.child("Rpm").val();//get Rpm
-   var getSpeed =snapshot.child("Speed").val();//get Speed
- 
+      	dataRpm.shift();	
+		dataSpeed.shift();
+	
+      	}
 
- addPoints(getTime,getSpeed,getRpm);//add speed and time
-
+	chart.render();	
 
   });
   
-  //function to add points x & y
-function addPoints(time,speed,rpm)
+  
+ 
+
+} 
+
+
+var now = new Date();
+var delay = 60 * 60 * 1000; // 1 hour in msec
+var start = delay - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
+
+setTimeout(function doSomething() {
+   // do the operation
+   // ... your code here...
+loadGraph();
+   // schedule the next tick
+   setTimeout(doSomething, delay);
+}, start);
+
+
+//---------------button pause and play------------------------//
+ var state = true;
+$("#btnToggleState").text('PAUSE');
+
+function pauseState() {
+  
+  if(state){
+ firebase.database().goOffline();
+state=false;
+
+$("#btnToggleState").text('PLAY');
+ }
+else
 {
-	
-	chart.series[0].addPoint(speed, false, false);
-	chart.series[1].addPoint(rpm, false, false);
-	
-	 chart.xAxis[0].categories.push(time);
-	
-	chart.xAxis[0].setCategories(chart.xAxis[0].categories, false);
-	chart.redraw();
+firebase.database().goOnline();
+state=true;
+
+$("#btnToggleState").text('PAUSE');
 }
- 
-  
-
-  
-
-  });
-  
- 
- 
-	//-------------------------------------------------Firebase------------------//
-});
-
 }
 
 
 
-
- 
-
-
-	
-			
 			
 </script>
 
