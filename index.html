@@ -111,11 +111,11 @@ input#vehicle_ID {text-transform: uppercase;}
  <input type="text" id="vehicle_ID"  onchange="enableButton()" style="width:157px;" maxlength="17" value="123334A" title="1st choose a date by clicking the (Calendar Button) then select hours on the (Dropdown Box) then click (Load Vehicle Data)">
  </div>
  <div class="w3-center">
- <label id="VINcss" class="w3-center" title="select a valid Date first before clicking this button else no data will be loaded" >Vehicle ID number</label>
+ <label id="VINcss" class="w3-center" >Vehicle ID number</label>
  </div>
   
   <div class="w3-center">
-<button id='startLoadButton' onclick="disableButton()" ><span>Load Vehicle Data</span></button>
+<button id='startLoadButton' onclick="disableButton()"  title="select a valid Date first before clicking this button else no data will be loaded"><span>Load Vehicle Data</span></button>
 
 </div>
 
