@@ -115,7 +115,7 @@ input#vehicle_ID {text-transform: uppercase;}
  </div>
   
   <div class="w3-center">
-<button id='startLoadButton' onclick="disableButton()"  title="select a valid Date first before clicking this button else no data will be loaded"><span>Load Vehicle Data</span></button>
+<button id='startLoadButton' onclick="disableButton()" title="select a valid Date first before clicking this button else no data will be loaded"><span>Load Vehicle Data</span></button>
 
 </div>
 
@@ -124,7 +124,20 @@ input#vehicle_ID {text-transform: uppercase;}
 
 <label>Date: </label> <input   type="text" id="datepicker" onchange="loadHours()" style="width:100px;" readonly>
 
+<label>Hours: </label>
 <select id="dataHours" class="w3-navbar w3-light-grey" title="select Hours"></select>
+
+<label># of Data: </label>
+<select id="numberOfData" class="w3-navbar w3-light-grey" title="select Number Of Data">
+<option value="10">10</option>
+  <option value="20">20</option>
+  <option value="30">30</option>
+  <option value="40">40</option>
+ <option value="50">50</option>
+ <option value="999">Max</option>
+
+</select>
+
 
 <button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
 
@@ -133,10 +146,18 @@ input#vehicle_ID {text-transform: uppercase;}
 
 
 
-<div class="w3-padding-tiny">
-<div id="container" >
+<div class="w3-padding-tiny w3-row">
+<div id="container" class="w3-container" >
 </div>
 </div>
+
+
+
+</div>
+
+
+
+
 
 <script>
 //function input only alphanumeric
@@ -154,8 +175,11 @@ $( function() {
             }, 2000);
         }
     });
-});	
+});
+	
+	
   } );
+  
   
 $(function(){
     $("#vehicle_ID").keypress(function(event){
@@ -233,15 +257,15 @@ var output =  ((''+month).length<2 ? '0' : '') + month + '/' + ((''+day).length<
  
 
  //getHours on this Day
-  $( function() {  
+
  loadHours();
  
- }); 
+
  
  
  function loadHours(){//get Hours on picked day
  
- $('#dataHours').empty().append();//clear first berfor apppending
+ $('#dataHours').empty().append();//clear first before apppending
  
  var datePick = $("#datepicker").val().split("/");
 
@@ -256,8 +280,12 @@ var dd = datePick[1];
 	$('#dataHours').append($('<option>', {value: refHour,text: refHour}));
 		
 			}); 
+			
+			
  
  }
+ 
+ 
  
  //calendar highlight day 
 
@@ -296,17 +324,21 @@ $( function() {
   //draw graphArea
   var dataRpm=[];
   var dataSpeed=[];
-
-	var chart = new CanvasJS.Chart("container", { 
-
+	var chart;
+	
+function loadChart(){//Draw Chart
+	chart = new CanvasJS.Chart("container", { 
+		zoomEnabled: true,
 		title: {
 			text: ""
 		},
+		
+		 axisX: {  stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
+		  axisY: {  includeZero: false, stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
+		  
 		 legend: {
             cursor: "pointer",
             itemclick: function (e) {
-                //console.log("legend click: " + e.dataPointIndex);
-                //console.log(e);
                 if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
                     e.dataSeries.visible = false;
                 } else {
@@ -329,34 +361,61 @@ $( function() {
       }
       ]
 	});
-chart.render();	
-  
-
+chart.render();
+ }
+ 
 	
-
+ //addStripline when a point is being mouse over or click //mouseover: onMouseover
+ 
   
+  function onClick(e) {
+		
 
+ 	chart.options.axisX.stripLines[0].value = e.dataPoint.x;
 	
+	var unitx;
+	
+	if(e.dataSeries.legendText=="RPM")
+	{
+   unitx=" RPM";
+	}
+	else if(e.dataSeries.legendText=="Speed")
+	{
+	unitx=" KmH";
+	}
+
+	chart.options.axisX.stripLines[0].label = e.dataPoint.y+unitx;
+	
+    chart.options.axisY.stripLines[0].value = e.dataPoint.y;
+    chart.render();		
+		
+	}
+ 	
+
 
 
 //-------------------------------------------------Firebase------------------//
 //get Time, Rpm and Speed
 var i=dataRpm.length+1;
 function loadGraph(){
+
+loadChart();
+
 var datePick = $("#datepicker").val().split("/");
 
 var yy= datePick[2];
 var mm = datePick[0];
 var dd = datePick[1];
 
-
 //var hh = (("0" + dx.getHours()).slice(-2));
+
 var hh = $( "#dataHours option:selected" ).text();
 
+var NofData= parseInt($( "#numberOfData option:selected" ).val());
 
  var VIN=$("#vehicle_ID").val();
 
-var ref = firebase.database().ref("ID/"+VIN+"/"+yy+"/"+mm+"/"+dd+"/"+hh).limitToLast(999);
+var ref = firebase.database().ref("ID/"+VIN+"/"+yy+"/"+mm+"/"+dd+"/"+hh).limitToLast(NofData);
 
 //get Time, Rpm and Speed
  ref.on("child_added", function(snapshot) {
@@ -367,11 +426,11 @@ var getSpeed=snapshot.child("Speed").val();
 
 
 	chart.options.title.text = mm+" - " +dd+ " - "+yy;
-	dataRpm.push({y: getRpm , x:i , label: getTime});
-	dataSpeed.push({y: getSpeed, x:i ,label: getTime});
+	dataRpm.push({y: getRpm , x:i , label: getTime,click: onClick});
+	dataSpeed.push({y: getSpeed, x:i ,label: getTime,click: onClick});
 	
 i++;
-	if (dataRpm.length > 999)
+	if (dataRpm.length > NofData)
       	{
 
       	dataRpm.shift();	
@@ -383,20 +442,18 @@ i++;
 
   });
   
-  
- 
-
 } 
+
+
 
 
 var now = new Date();
 var delay = 60 * 60 * 1000; // 1 hour in msec
 var start = delay - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
 
-setTimeout(function doSomething() {
-   // do the operation
-   // ... your code here...
-loadGraph();
+setTimeout(function doSomething() {//refresh graph every hour
+		loadHours();
+	   refreshChart();
    // schedule the next tick
    setTimeout(doSomething, delay);
 }, start);
@@ -423,9 +480,40 @@ $("#btnToggleState").text('PAUSE');
 }
 }
 
+function refreshChart(){//clear chart then refresh data
+if($('#startLoadButton').prop('disabled')) { 
+ 
+chart.data[0].remove();
+chart.data[0].remove();
+
+dataRpm=[];
+dataSpeed=[];
+
+loadGraph();
+ 
+ }
+
+}
 
 
-			
+    $("#datepicker").change(function(){//fuction value when change calendar
+$("#dataHours").val($("#dataHours option:first").val());
+loadHours();
+
+	   refreshChart();
+	
+    });
+
+	
+    $("#dataHours,#numberOfData").change(function(){//when hours selected changed and when # of Data changed
+	
+	   refreshChart();
+	
+    });
+	
+
+	
+		
 </script>
 
 </body>
