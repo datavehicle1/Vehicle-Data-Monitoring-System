@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html>
+<title>Cloud-Based Vehicle Data Monitoring System</title>
+<link rel="shortcut icon" type="image/png" href="res/icon.png" />
+<style>
+
+
+
+#vehicle_ID{ font-family: Arial, Helvetica, sans-serif;}
+
+#VINcss{  font-family: Arial, Helvetica, sans-serif; font-size: 12px; }
+
+
+.ui-datepicker-trigger{padding: 5px;}
+
+
+#startLoadButton {
+  display: inline-block;
+  border-radius: 4px;
+  background-color: #7FC6E9;
+  border: none;
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 13px;
+  padding: 5px;
+  width: 180px;
+  height: 30px;
+  cursor: pointer;
+  margin: 5px;
+
+ 
+}
+
+#startLoadButton  span {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+#startLoadButton  span:after {
+  content: ' >';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+#startLoadButton:hover span {
+  padding-right: 25px;
+}
+
+#startLoadButton:hover span:after {
+  opacity: 1;
+  right: 0;
+}
+
+#startLoadButton:active {
+  background-color: #669BB6;
+  box-shadow: 0 2px #666;
+  transform: translateY(4px);
+}
+
+#startLoadButton:disabled
+        {
+        cursor: not-allowed;
+        pointer-events: none;
+
+        /*Button disabled - CSS color class*/
+        color: #c0c0c0;
+        background-color: #ebebe0;
+
+        }
+
+input#vehicle_ID {text-transform: uppercase;}
+
+
+.event a {
+    background-color: #42B373 !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
+
+</style>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="lib/w3.css">
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
+ <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/3.6.1/firebase.js"></script>
+
+<script src="lib/canvasjs.min.js"></script>
+
+<link rel="stylesheet" href="lib/jquery.dynameter.css">
+<script src="lib/jquery.dynameter.js"></script>
+
+
+<script src="lib/jquery.tempgauge.js"></script>
+
+
+
+</head>
+<body>
+
+
+
+
+ <div class="w3-center w3-padding-4" >
+ <input type="text" id="vehicle_ID"  onchange="enableButton()" style="width:157px;" maxlength="17" value="123334A" title="1st choose a date by clicking the (Calendar Button) then select hours on the (Dropdown Box) then click (Load Vehicle Data)">
+ </div>
+ <div class="w3-center">
+ <label id="VINcss" class="w3-center" >Vehicle ID number</label>
+ </div>
+  
+  <div class="w3-center">
+<button id='startLoadButton' onclick="disableButton()" title="select a valid Date first before clicking this button else no data will be loaded"><span>Load Vehicle Data</span></button>
+
+</div>
+
+
+   <div class="w3-container w3-light-gray w3-padding-4">
+
+<label>Date: </label> <input   type="text" id="datepicker" onchange="loadHours()" style="width:100px;" readonly>
+
+<label>Hours: </label>
+<select id="dataHours" class="w3-navbar w3-light-grey" title="select Hours"></select>
+
+<label># of Data: </label>
+<select id="numberOfData" class="w3-navbar w3-light-grey" title="select Number Of Data">
+<option value="10">10</option>
+  <option value="20">20</option>
+  <option value="30">30</option>
+  <option value="40">40</option>
+ <option value="50">50</option>
+ <option value="999">Max</option>
+
+</select>
+
+
+<button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
+
+<!--<button class="w3-btn w3-small w3-right w3-ripple w3-teal"  onclick="testT()" style="text-align: center;"><span></span></button>-->
+
+</div>
+
+   <div class="w3-container w3-gray w3-padding-4 w3-row" style="z-index: -1;">
+   <div id="fuel-gauge"  class="w3-col w3-left s4"  style="z-index: 0;" ></div>
+ <div id="battery-gauge"  class="w3-col w3-right s4"  style="z-index: 0;" ></div>
+ <div id="temp-gauge"  class="w3-col w3-center s4"  style="z-index: 0;" ></div>
+
+
+</div>
+
+
+<div class="w3-padding-tiny w3-row">
+
+<div id="container" class="w3-container" >
+</div>
+
+</div>
+
+
+
+</div>
+
+
+<script>
+
+
+//function input only alphanumeric
+$( function() {
+
+   $(document).ready(function () {
+    $(document).tooltip({
+        show: {
+            effect: 'slideDown'
+        },
+        track: true,
+        open: function (event, ui) {
+            setTimeout(function () {
+                $(ui.tooltip).hide('fade');
+            }, 2000);
+        }
+    });
+});
+	
+	
+  } );
+  
+  
+$(function(){
+    $("#vehicle_ID").keypress(function(event){
+        var ew = event.which;
+        if(48 <= ew && ew <= 57)
+            return true;
+        if(65 <= ew && ew <= 90)
+            return true;
+        if(97 <= ew && ew <= 122)
+            return true;
+        return false;
+    });
+});
+
+function disableButton(){
+document.getElementById("startLoadButton").disabled=true;
+loadGraph();
+}
+
+
+function enableButton()
+{
+document.getElementById("startLoadButton").disabled=false;
+}
+
+
+//get date now
+var VIN=$("#vehicle_ID").val();
+
+var d = new Date();
+
+var month = d.getMonth()+1;
+var day = d.getDate();
+var year=d.getFullYear();
+var hours = (("0" + d.getHours()).slice(-2));
+
+var compDate =  ((''+month).length<2 ? '0' : '') + month + '/' + ((''+day).length<2 ? '0' : '') + day +'/'+ year;
+ 
+ document.getElementById("datepicker").value=compDate;
+
+
+	//-------------------------------------------------Firebase Initialization-------------//
+	  var config = {
+    apiKey: "AIzaSyDA5QUaEsUGQ9mKLflWzFqXpFCrFoyhEog",
+    authDomain: "cloud-based-vehicle-data.firebaseapp.com",
+    databaseURL: "https://cloud-based-vehicle-data.firebaseio.com",
+    storageBucket: "cloud-based-vehicle-data.appspot.com",
+    messagingSenderId: "945520281616"
+  };
+  firebase.initializeApp(config);
+ 
+ var eventDates = {};// eventDates[ new Date( '12/04/2014' )] = new Date( '12/04/2014' );
+//load days with data
+ $( function() {  
+  var refYear = firebase.database().ref("ID/"+VIN);
+ refYear.on("child_added", function(snapshot) {
+    var getYear = snapshot.key;
+	
+	var refMonth = firebase.database().ref("ID/"+VIN+"/"+getYear);
+ refMonth.on("child_added", function(snapshot) {
+    var getMonth = snapshot.key;
+	
+	var refDay = firebase.database().ref("ID/"+VIN+"/"+getYear+"/"+getMonth);
+ refDay.on("child_added", function(snapshot) {
+    var getDay = snapshot.key;
+
+        eventDates[ new Date( getMonth+"/"+getDay+"/"+getYear )] = new Date( getMonth+"/"+getDay+"/"+getYear ); //highlight Data with dates 
+		
+		
+		
+		}); 
+    });
+   });
+ });
+ 
+
+ //getHours on this Day
+
+ loadHours();
+ 
+
+ 
+ function loadHours(){//get Hours on picked day
+
+ $('#dataHours').empty().append();//clear first before apppending
+ 
+ var datePick = $("#datepicker").val().split("/");
+
+var yy= datePick[2];
+var mm = datePick[0];
+var dd = datePick[1];
+
+ var refHour= firebase.database().ref("ID/"+VIN+"/"+yy+"/"+mm+"/"+dd);
+ refHour.on("child_added", function(snapshot) {
+    var refHour = snapshot.key;
+	
+	$('#dataHours').append($('<option>', {value: refHour,text: refHour}));
+		
+			}); 
+			
+	$("#dataHours option:last").attr("selected", "selected");	
+ 
+ }
+ 
+ 
+ 
+ //calendar highlight day 
+
+$( function() {
+ 
+        // An array of dates
+     
+        // datepicker
+        $("#datepicker").datepicker({
+		   showOn: "button",
+      buttonImage: "res/calendarIcon.png",
+      buttonImageOnly: true,
+      buttonText: "Note: A day that contains data are highlighted with green. see December 2016",	   
+	  
+            beforeShowDay: function( date ) {
+
+        var highlight = eventDates[date];
+                if( highlight ) {
+                     return [true, "event", "Contains data"];
+                } else {
+                     return [true, '', ''];
+                }
+             }
+			 
+			
+        });	
+
+    });
+	
+	
+	
+  
+
+  
+  
+  //draw graphArea
+  var dataRpm=[];
+  var dataSpeed=[];
+  var dataTP=[];
+  
+	var chart;
+	
+function loadChart(){//Draw Chart
+	chart = new CanvasJS.Chart("container", { 
+		zoomEnabled: true,
+		title: {
+			text: ""
+		},
+		
+		 axisX: {  stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
+		  axisY: {  includeZero: false, stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
+		  
+		 legend: {
+            cursor: "pointer",
+            itemclick: function (e) {
+                if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                    e.dataSeries.visible = false;
+                } else {
+                    e.dataSeries.visible = true;
+                }
+
+                e.chart.render();
+            }
+        },
+		
+		  animationEnabled: true,
+		data: [
+      {        
+        type: "line", yValueFormatString:"### RPMx(1OO)",showInLegend: true,legendText: "RPM",
+        dataPoints: dataRpm
+      },
+        {        
+        type: "line", yValueFormatString:"####### KmH",showInLegend: true,legendText: "Speed",
+        dataPoints: dataSpeed
+      },
+        {        
+        type: "line", yValueFormatString:"### %",showInLegend: true,legendText: "Throttle Pos.",
+        dataPoints: dataTP
+      }
+      ]
+	});
+chart.render();
+
+ $("#dataHours option:last").attr("selected", "selected");	
+ }
+ 
+	
+ //addStripline when a point is being mouse over or click //mouseover: onMouseover
+ loadChart();
+ 
+/* $( "canvas" ).addClass( "w3-container" );
+ 
+ $( "body" ).append( '<div id="fuel-gauge"  class="w3-container"  ></div>' );
+ $( "body" ).append( '<div id="fuel-gauge-control"  class="w3-container"  ></div>');
+ */
+
+
+  
+  function onClick(e) {
+		
+
+ 	chart.options.axisX.stripLines[0].value = e.dataPoint.x;
+	
+	var unitx;
+	
+	if(e.dataSeries.legendText=="RPM")
+	{
+   unitx=" RPM";
+	}
+	else if(e.dataSeries.legendText=="Speed")
+	{
+	unitx=" KmH";
+	}
+
+	chart.options.axisX.stripLines[0].label = e.dataPoint.y+unitx;
+	
+    chart.options.axisY.stripLines[0].value = e.dataPoint.y;
+    chart.render();		
+		
+	}
+ 	
+
+
+
+//-------------------------------------------------Firebase------------------//
+//get Time, Rpm and Speed
+var i=dataRpm.length+1;
+
+var getTime,getRpm,getSpeed;
+///////////////
+
+
+//////////////
+
+function loadGraph(){
+loadLiveData();
+ 
+loadChart();
+
+//get Time, Rpm and Speed
+//var latestSnapshot = null,def = $.Deferred();;
+var datePick = $("#datepicker").val().split("/");
+
+var yy= datePick[2];
+var mm = datePick[0];
+var dd = datePick[1];
+var refx;
+//var hh = (("0" + dx.getHours()).slice(-2));
+
+var hh = $( "#dataHours option:selected" ).text();
+
+var NofData= parseInt($( "#numberOfData option:selected" ).val());
+
+ var VIN=$("#vehicle_ID").val();
+
+
+
+// i++;
+//console.log(i)
+
+
+
+var ref = firebase.database().ref("ID/"+VIN+"/"+yy+"/"+mm+"/"+dd+"/"+hh).limitToLast(NofData);
+
+
+
+//var onValueChange=
+ ref.on("child_added", function(snapshot) {
+ //var arrayTime=[];
+
+getTime = snapshot.key;
+getRpm=snapshot.child("Rpm").val();  
+getSpeed=snapshot.child("Speed").val();  
+getTP=snapshot.child("ThrottlePos").val();  
+
+	chart.options.title.text = mm+" - " +dd+ " - "+yy;
+
+
+	dataRpm.push({y: getRpm/100 , x:i , label: getTime,click: onClick});
+	dataSpeed.push({y: getSpeed, x:i ,label: getTime,click: onClick});
+	dataTP.push({y: getTP, x:i ,label: getTime,click: onClick});
+	
+	i++;
+		
+	if (dataRpm.length > NofData)
+      	{
+
+      	dataRpm.shift();	
+		dataSpeed.shift();
+		dataTP.shift();
+      	}
+		
+
+	chart.render();	
+	
+
+	 
+  });
+  
+
+ //  ref.on('value', onValueChange);
+//ref.child('meta-data').on('child_added', onChildAdded);
+  //ref.off('value', onValueChange);
+  
+
+ 
+} 
+ 
+ 
+ function testT()
+ {
+ //loadGraph().then(function(datax) { console.log(datax) });
+ //console.log(tempRef);
+
+
+ }
+
+var now = new Date();
+var delay = 60 * 60 * 1000; // 1 hour in msec
+var start = delay - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
+
+setTimeout(function doSomething() {//refresh graph every hour
+		loadHours();
+	   refreshChart();
+	   offCheck();
+   // schedule the next tick
+   setTimeout(doSomething, delay);
+}, start);
+
+
+//---------------button pause and play------------------------//
+ var state = true;
+$("#btnToggleState").text('PAUSE');
+
+function pauseState() {
+  
+  if(state){
+ firebase.database().goOffline();
+state=false;
+
+$("#btnToggleState").text('PLAY');
+ }
+else
+{
+firebase.database().goOnline();
+state=true;
+
+$("#btnToggleState").text('PAUSE');
+}
+}
+
+function refreshChart(){//clear chart then refresh data
+if($('#startLoadButton').prop('disabled')) { 
+ 
+chart.data[0].remove();
+chart.data[0].remove();
+
+dataRpm=[];
+dataSpeed=[];
+dataTP=[];
+
+loadGraph();
+ 
+ }
+
+}
+
+
+    $("#datepicker").change(function(){//fuction value when change calendar
+
+	loadHours();
+	offCheck();
+	   refreshChart();
+	
+    });
+	
+	
+
+	
+	
+	
+    $("#dataHours").change(function(){//when hours selected changed 
+		
+		//alert($("#dataHours").find(':selected').val()+"!="+hours+" && "+compDate +"!="+$("#datepicker").val())
+	
+	offCheck();
+	 refreshChart();
+	
+    });
+	
+	  $("#numberOfData").change(function(){// when # of Data changed
+	   refreshChart();
+    });
+	
+	
+	function offCheck()//check if selected date or time is realtime or not
+	{
+		var datePicked=$("#datepicker").val();
+		var hoursPicked=$("#dataHours").find(':selected').val();
+		
+		//alert(hoursPicked+"!="+ hours)
+	if ((hoursPicked!= hours || datePicked!=compDate))
+	{
+		firebase.database().goOffline()
+	}
+	else
+	{
+	firebase.database().goOnline()
+	}
+	
+	}
+	
+	
+	
+	//----------------------------------------------------Gauge
+var $myFuelGauge,$myBatteryGauge, $myTempGauge;
+
+
+
+  $myFuelGauge = $("div#fuel-gauge").dynameter({
+    width: 40,
+    label: 'fuel',
+    value: 0,
+    min: 0,
+    max: 100,
+    unit: '%',
+    regions: { // Value-keys and color-refs
+      0: 'error',
+      5: 'warn',
+      12: 'normal'
+    }
+  });
+
+  // jQuery UI slider widget
+ 
+  
+  
+   $myBatteryGauge = $("div#battery-gauge").dynameter({
+    width: 40,
+    label: 'Battery',
+    value: 0,
+    min: 0,
+    max: 100,
+    unit: '%',
+    regions: { // Value-keys and color-refs
+    
+      0: 'error',
+      15: 'normal'
+    }
+  });
+
+  // jQuery UI slider widget
+  
+  //"&deg;C"
+  
+   $myTempGauge = $("div#temp-gauge").dynameter({
+    width: 40,
+    label: 'Temperature',
+    value: 0,
+    min: 0,
+    max: 100,
+    unit: '&deg;C',
+    regions: { // Value-keys and color-refs
+    
+      90: 'error',
+      85: 'warn',
+      100: 'normal'
+    }
+  });
+
+function loadLiveData() {//load live Data
+var VIN=$("#vehicle_ID").val();
+
+var refLive = firebase.database().ref("ID/"+VIN+"/LiveData");
+
+//var onValueChange=
+ refLive.on("value", function(snapshot) {
+ //var arrayTime=[];
+ 
+getFuel = snapshot.child("Fuel").val();
+getTemp=snapshot.child("Temp").val();  
+getBat=snapshot.child("Battery").val();  
+
+
+$myBatteryGauge.changeValue(getBat);
+  $myTempGauge.changeValue(getTemp);
+ $myFuelGauge.changeValue(getFuel);
+	 
+  });
+
+
+}
+
+//----------------------------------------------------Gauge
+
+
+
+
+</script>
+
+</body>
+</html>
