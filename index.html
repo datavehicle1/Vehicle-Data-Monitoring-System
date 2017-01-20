@@ -137,12 +137,11 @@ input#vehicle_ID {text-transform: uppercase;}
 
 <label># of Data: </label>
 <select id="numberOfData" class="w3-navbar w3-light-grey" title="select Number Of Data">
-<option value="10">10</option>
-  <option value="20">20</option>
-  <option value="30">30</option>
-  <option value="40">40</option>
- <option value="50">50</option>
- <option value="999">Max</option>
+<option value="30">30</option>
+  <option value="60">60</option>
+  <option value="180">180</option>
+ <option value="360">360</option>
+ <option value="720">720</option>
 
 </select>
 
@@ -175,7 +174,7 @@ input#vehicle_ID {text-transform: uppercase;}
 
 
 <script>
-
+screen.orientation.lock('landscape');
 
 //function input only alphanumeric
 $( function() {
@@ -437,6 +436,10 @@ var getTime,getRpm,getSpeed;
 //////////////
 
 function loadGraph(){
+
+var t0 = performance.now();
+
+
 loadLiveData();
  
 loadChart();
@@ -507,6 +510,8 @@ getTP=snapshot.child("ThrottlePos").val();
   //ref.off('value', onValueChange);
   
 
+var t1 = performance.now();
+console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.")
  
 } 
  
