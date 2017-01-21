@@ -101,13 +101,10 @@ input#vehicle_ID {text-transform: uppercase;}
 
 <script src="lib/canvasjs.min.js"></script>
 
-<link rel="stylesheet" href="lib/jquery.dynameter.css">
-<script src="lib/jquery.dynameter.js"></script>
 
 
-<script src="lib/jquery.tempgauge.js"></script>
-
-
+<script src="lib/raphael-2.1.4.min.js"></script>
+<script src="lib/justgage.js"></script>
 
 </head>
 <body>
@@ -152,11 +149,11 @@ input#vehicle_ID {text-transform: uppercase;}
 
 </div>
 
-   <div class="w3-container w3-gray w3-padding-4 w3-row" style="z-index: -1;">
-   <div id="fuel-gauge"  class="w3-col w3-left s4"  style="z-index: 0;" ></div>
- <div id="battery-gauge"  class="w3-col w3-right s4"  style="z-index: 0;" ></div>
- <div id="temp-gauge"  class="w3-col w3-center s4"  style="z-index: 0;" ></div>
-
+   <div class="w3-container w3-white w3-padding-4 w3-row" style="z-index: -1;">
+ 
+ <div id="fuel-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+ <div id="temp-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+ <div id="battery-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
 
 </div>
 
@@ -623,59 +620,41 @@ loadGraph();
 	
 	//----------------------------------------------------Gauge
 var $myFuelGauge,$myBatteryGauge, $myTempGauge;
+var fuel;
 
 
-
-  $myFuelGauge = $("div#fuel-gauge").dynameter({
-    width: 40,
-    label: 'fuel',
-    value: 0,
+  $myFuelGauge = new JustGage({
+    id: "fuel-gauge",
+    value: getFuel,
     min: 0,
     max: 100,
-    unit: '%',
-    regions: { // Value-keys and color-refs
-      0: 'error',
-      5: 'warn',
-      12: 'normal'
-    }
+    //title: "Lone Ranger",
+	levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
+    label: "Fuel %"
   });
-
-  // jQuery UI slider widget
- 
   
-  
-   $myBatteryGauge = $("div#battery-gauge").dynameter({
-    width: 40,
-    label: 'Battery',
-    value: 0,
+   $myBatteryGauge = new JustGage({
+    id: "battery-gauge",
+    value: getBat,
     min: 0,
     max: 100,
-    unit: '%',
-    regions: { // Value-keys and color-refs
-    
-      0: 'error',
-      15: 'normal'
-    }
+    //title: "Lone Ranger",
+	levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
+    label: "Battery %"
   });
-
-  // jQuery UI slider widget
   
-  //"&deg;C"
-  
-   $myTempGauge = $("div#temp-gauge").dynameter({
-    width: 40,
-    label: 'Temperature',
-    value: 0,
+   $myTempGauge = new JustGage({
+    id: "temp-gauge",
+    value: getTemp,
     min: 0,
     max: 100,
-    unit: '&deg;C',
-    regions: { // Value-keys and color-refs
-    
-      90: 'error',
-      85: 'warn',
-      100: 'normal'
-    }
+    //title: "Lone Ranger",
+	//unit: "%",
+    label: "Temp. %"
   });
+
+  
+var getFuel,getTemp,getBat;
 
 function loadLiveData() {//load live Data
 var VIN=$("#vehicle_ID").val();
@@ -690,11 +669,10 @@ getFuel = snapshot.child("Fuel").val();
 getTemp=snapshot.child("Temp").val();  
 getBat=snapshot.child("Battery").val();  
 
-
-$myBatteryGauge.changeValue(getBat);
-  $myTempGauge.changeValue(getTemp);
- $myFuelGauge.changeValue(getFuel);
-	 
+$myFuelGauge.refresh(getFuel);
+$myTempGauge.refresh(getTemp);
+$myBatteryGauge.refresh(getBat);
+ 
   });
 
 
