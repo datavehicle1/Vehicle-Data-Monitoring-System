@@ -44,9 +44,11 @@
             var uid = user.uid;
             var providerData = user.providerData;
 			
-			$( "#welcomeUser" ).append('Welcome ' + displayName);
-		  	$('#profpic').attr('src', photoURL);
+			$( "#welcomeUser" ).append('Hi ' + displayName + " "+greetTime());
 
+			$('#profpic').attr('src', photoURL);
+			
+			
 			writeUserData(uid, displayName, email);//write data in firebase after sign-in
 			
             user.getToken().then(function(accessToken) {
@@ -83,6 +85,8 @@
     username: name,
     email: email
   });*/
+  
+  
 }
 
 
@@ -129,7 +133,7 @@ function signOUT(){//function signput button
 }, function(error) {
   console.error('Sign Out Error', error);
 });
-window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/fbu";
+window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/fbu/";
 
 }
 
@@ -210,7 +214,7 @@ $('#addVehicle').click(function () {
   <body>
     <h1 id="welcomeUser"></h1>
 	<img id="profpic" src="" alt="Profile Pic" height="100" width="111">
-	  
+	
     <div id="sign-in-status"></div>
     <div id="sign-in"></div>
     <div id="account-details"></div>
@@ -266,9 +270,30 @@ $('#addVehicle').click(function () {
 
 $(document).ready(function() {
 
-
-
 });
+
+function greetTime(){
+var thehours = new Date().getHours();
+	var themessage;
+	
+	var morning = ('Good Morning');
+	var afternoon = ('Good Afternoon');
+	var evening = ('Good Evening');
+	
+	if (thehours >= 0 && thehours < 12) {
+		themessage = morning; 
+
+	} else if (thehours >= 12 && thehours < 17) {
+		themessage = afternoon;
+
+	} else if (thehours >= 17 && thehours < 24) {
+		themessage = evening;
+	}
+
+return themessage;
+	
+}
+
 
 	</script>
 
