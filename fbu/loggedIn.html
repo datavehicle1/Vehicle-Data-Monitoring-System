@@ -9,6 +9,17 @@
        ***************************************************************************************** -->
 	   
 	   	   <script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
+		   
+
+ <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+  <link rel="stylesheet" href="lib/w3.css">
+
+  <script src="https://unpkg.com/querybase@0.6.0"></script>
+  
+ <script src="https://cdn.jsdelivr.net/jquery.validation/1.15.1/jquery.validate.min.js"></script>
+  
 <script>
   // Initialize Firebase
   var config = {
@@ -32,6 +43,12 @@
             var photoURL = user.photoURL;
             var uid = user.uid;
             var providerData = user.providerData;
+			
+			$( "#welcomeUser" ).append('Welcome ' + displayName);
+
+
+			writeUserData(uid, displayName, email);//write data in firebase after sign-in
+			
             user.getToken().then(function(accessToken) {
               document.getElementById('sign-in-status').textContent = 'Signed in';
               document.getElementById('sign-in').textContent = 'Sign out';
@@ -59,8 +76,54 @@
       window.addEventListener('load', function() {
         initApp()
       });
+
 	  
-function signOUT(){
+	  function writeUserData(userId, name, email) {//function to write data in firebase
+ /* firebase.database().ref('users/' + userId).set({
+    username: name,
+    email: email
+  });*/
+}
+
+
+
+
+
+function checkVINexist( VIN ){
+
+
+  
+ 
+  var query = firebase.database().ref('registered_vehicles/'+VIN);
+query.once("value")
+  .then(function(snapshot) {
+    var check = snapshot.exists(); 
+
+console.log(check);
+ if(check==false){
+   var r= $('<input type="button" value='+$('#vehicleID').val()+' id='+$('#vehicleID').val()+'/>');
+       $("body").append(r);
+  }
+  else
+  {
+   
+
+
+  alert('Vehicle already registerd');
+  }
+
+	
+  });
+
+
+  
+ 
+
+
+}
+
+
+function signOUT(){//function signput button
 	  firebase.auth().signOut().then(function() {
   console.log('Signed Out');
 }, function(error) {
@@ -70,15 +133,143 @@ window.location.href = "/fbu";
 
 }
 
+
+/*$(function(){
+
+  $('#addVehicle').on('click',function(){
+        var r= $('<input type="button" value='+$('#vehicleID').val()+' id='+$('#vehicleID').val()+'/>');
+        $("body").append(r);
+    });
+	
+});*/
+
+
+function saveVehicleData()
+{
+//document.getElementsByClassName("close")[0].span.onclick 
+
+
+    // Setup form validation on the #register-form element
+ 
+
+
+checkVINexist($('#vehicleID').val());
+var span = document.getElementsByClassName("close")[0];
+$('.w3-closebtn').click();
+
+
+
+}
+
+
+$(document).ready(function () {
+
+ $('#register-vehicle').validate({
+   rules: {
+      vehicleID: {required: true,rangelength: [16,20]},
+	  vehicleName: {required: true,rangelength: [1,30]}
+	  
+    },
+
+ 
+ });
+
+
+$('#addVehicle').click(function () {
+
+
+
+
+
+        if ($("#register-vehicle").valid()) {
+           saveVehicleData();
+        }
+    });
+	
+
+
+
+});
+
+
+
+
+
     </script>
+	<style>
+	input#vehicleID {text-transform: uppercase;}
+	
+	.error{color: red;}
+	
+
+
+	</style>
+	
+
   </head>
   <body>
-    <h1>Welcome to My Awesome App</h1>
+    <h1 id="welcomeUser"></h1>
     <div id="sign-in-status"></div>
     <div id="sign-in"></div>
     <div id="account-details"></div>
 	
+	  
+  <button onclick="document.getElementById('id01').style.display='block'" class="w3-btn">Add Vehicle</button>
+
+  <div id="id01" class="w3-modal">
+    <div class="w3-modal-content">
+      <div class="w3-container">
+        <span onclick="document.getElementById('id01').style.display='none'" class="w3-closebtn">&times;</span>
+    
+<div class="w3-container w3-blue">
+  <h2>Vehicle ID Form</h2>
+</div>
+
+		<form  id="register-vehicle">
+
+ <p >Vehicle ID Number</p>
+  <input type="text" class="w3-input"  name="vehicleID" id="vehicleID" placeholder="Vehicle ID Number"  maxlength="17" >
+  <p style="padding-top: 5px;">Vehicle Name eg.Toyota Vios</p>
+  <input type="text"  class="w3-input" name="vehicleName" placeholder="Vehicle Name"  maxlength="30"  >
+  <br><br>
+  
+  <button type="button" id="addVehicle" class="w3-btn w3-teal" >Save Vehicle Data </button>
+
+</form> 
+
+
+
+</div>
+    </div>
+  </div>
+	
+	
 	<button type="button" onclick="signOUT()">signOUT</button>
+	
+	<script>
+	  $(function(){
+   $('#vehicleID').keypress(function(event){
+
+        var ew = event.which;
+        if(48 <= ew && ew <= 57)
+            return true;
+        if(65 <= ew && ew <= 90)
+            return true;
+        if(97 <= ew && ew <= 122)
+            return true;
+        return false;
+    });
+});
+
+
+$(document).ready(function() {
+
+
+
+});
+
+	</script>
+
 	
   </body>
 </html>
