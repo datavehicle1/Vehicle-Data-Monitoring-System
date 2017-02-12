@@ -8,6 +8,7 @@
        * Firebase Console > Overview > Add Firebase to your web app. *
 	   
        ***************************************************************************************** -->
+	   
 	   <script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
 <script>
   // Initialize Firebase
@@ -21,7 +22,8 @@
   firebase.initializeApp(config);
 </script>
   
-	   
+   <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    
     <script src="https://cdn.firebase.com/libs/firebaseui/1.0.0/firebaseui.js"></script>
     <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/1.0.0/firebaseui.css" />
     <script type="text/javascript">
@@ -44,12 +46,36 @@
       var ui = new firebaseui.auth.AuthUI(firebase.auth());
       // The start method will wait until the DOM is loaded.
       ui.start('#firebaseui-auth-container', uiConfig);
+	  
+	  
+$(document).ready(function () {
+var thehours = new Date().getHours();
+	var themessage;
+	var morning = ('Good Morning');
+	var afternoon = ('Good Afternoon');
+	var evening = ('Good Evening');
+
+	if (thehours >= 0 && thehours < 12) {
+		themessage = morning; 
+
+	} else if (thehours >= 12 && thehours < 17) {
+		themessage = afternoon;
+
+	} else if (thehours >= 17 && thehours < 24) {
+		themessage = evening;
+	}
+	
+$( "#welcomeUser" ).append("Hello Earthlings "+ themessage);
+
+});
+
+	  
     </script>
   </head>
   <body>
     <!-- The surrounding HTML is left untouched by FirebaseUI.
          Your app may use that space for branding, controls and other customizations.-->
-    <h1>Welcome to My Awesome App</h1>
+       <h1 id="welcomeUser"></h1>
     <div id="firebaseui-auth-container"></div>
   </body>
 </html>
