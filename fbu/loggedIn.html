@@ -45,7 +45,7 @@
             var providerData = user.providerData;
 			
 			$( "#welcomeUser" ).append('Welcome ' + displayName);
-
+		  	$('#profpic').attr('src', photoURL);
 
 			writeUserData(uid, displayName, email);//write data in firebase after sign-in
 			
@@ -209,6 +209,8 @@ $('#addVehicle').click(function () {
   </head>
   <body>
     <h1 id="welcomeUser"></h1>
+	<img id="profpic" src="" alt="Profile Pic" height="100" width="111">
+	  
     <div id="sign-in-status"></div>
     <div id="sign-in"></div>
     <div id="account-details"></div>
