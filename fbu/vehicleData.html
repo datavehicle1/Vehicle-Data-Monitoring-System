@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Sample FirebaseUI App</title>
+    <!-- *******************************************************************************************
+       * TODO(DEVELOPER): Paste the initialization snippet from:
+       * Firebase Console > Overview > Add Firebase to your web app. *
+       ***************************************************************************************** -->
+	    		   	   <script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
+		   
+
+ <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+  <link rel="stylesheet" href="lib/w3.css">
+
+  
+ <script src="https://cdn.jsdelivr.net/jquery.validation/1.15.1/jquery.validate.min.js"></script>
+		   
+	   <script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCkzwFVCHoe7Hs1RLsR6AAhMxwCvJWzriM",
+    authDomain: "cbvdmsusers.firebaseapp.com",
+    databaseURL: "https://cbvdmsusers.firebaseio.com",
+    storageBucket: "cbvdmsusers.appspot.com",
+    messagingSenderId: "59734821259"
+  };
+  firebase.initializeApp(config);
+</script>
+
+    <script type="text/javascript">
+      initApp = function() {
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            // User is signed in.
+        //    var displayName = user.displayName;
+        //    var email = user.email;
+        //    var emailVerified = user.emailVerified;
+         //   var photoURL = user.photoURL;
+           // var uid = user.uid;
+          //  var providerData = user.providerData;
+            user.getToken().then(function(accessToken) {
+             document.getElementById('sign-in-status').textContent = 'Signed in';
+			 
+			 //get data page before
+			    var parameters = location.search.substring(1).split("&");
+				var temp = parameters[0].split("=");
+				VIN = unescape(temp[1]);
+				alert(VIN); //Dialog with the text you put on the textbox
+			 
+			 
+           //   document.getElementById('sign-in').textContent = 'Sign out';
+           //  document.getElementById('account-details').textContent = JSON.stringify({
+            //    displayName: displayName,
+            //    email: email,
+            //    emailVerified: emailVerified,
+            //    photoURL: photoURL,
+             //   uid: uid,
+             //   accessToken: accessToken,
+            //   providerData: providerData
+          //    }, null, '  ');
+            });
+          } else {
+            // User is signed out.
+         //   document.getElementById('sign-in-status').textContent = 'Signed out';
+            document.getElementById('sign-in-status').textContent = 'Sign Out Please Login';
+         //   document.getElementById('account-details').textContent = 'null';
+          }
+        }, function(error) {
+          console.log(error);
+        });
+      };
+
+      window.addEventListener('load', function() {
+        initApp()
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Vehicle Data</h1>
+
+    <div id="sign-in-status"></div>
+   
+  </body>
+</html>
