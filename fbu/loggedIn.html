@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Cloud Vehicle Data Users</title>
+    <title>Sample FirebaseUI App</title>
     <!-- *******************************************************************************************
        * TODO(DEVELOPER): Paste the initialization snippet from:
        * Firebase Console > Overview > Add Firebase to your web app. *
@@ -16,7 +16,6 @@
   
   <link rel="stylesheet" href="lib/w3.css">
 
-  <script src="https://unpkg.com/querybase@0.6.0"></script>
   
  <script src="https://cdn.jsdelivr.net/jquery.validation/1.15.1/jquery.validate.min.js"></script>
   
@@ -33,6 +32,8 @@
 </script>
 
     <script type="text/javascript">
+
+	var uid;
       initApp = function() {
         firebase.auth().onAuthStateChanged(function(user) {
           if (user) {
@@ -41,16 +42,39 @@
             var email = user.email;
             var emailVerified = user.emailVerified;
             var photoURL = user.photoURL;
-            var uid = user.uid;
+            uid = user.uid;
             var providerData = user.providerData;
 			
 			$( "#welcomeUser" ).append('Hi ' + displayName + " "+greetTime());
 
 			$('#profpic').attr('src', photoURL);
+	
+if(emailVerified==false){
+			user.sendEmailVerification().then(function() {
+  alert("Verify Your Email");
+}, function(error) {
+  // An error happened.
+});
+
+}
+
 			
+			writeUserData(uid, displayName, email);//#callfunction write data in firebase after sign-in
 			
-			writeUserData(uid, displayName, email);//write data in firebase after sign-in
-			
+var query = firebase.database().ref("users/"+uid+"/vehicles").orderByKey();//get all users vehicles
+query.once("value")
+  .then(function(snapshot) {
+    snapshot.forEach(function(snapshot) {
+			var vehicleID=snapshot.key;
+			var vehicleName=snapshot.child('name').val();		
+			appendVehicleSelector(vehicleID,vehicleName);
+
+ 
+  });
+});
+  
+	
+
             user.getToken().then(function(accessToken) {
               document.getElementById('sign-in-status').textContent = 'Signed in';
               document.getElementById('sign-in').textContent = 'Sign out';
@@ -80,97 +104,133 @@
       });
 
 	  
-	  function writeUserData(userId, name, email) {//function to write data in firebase
- /* firebase.database().ref('users/' + userId).set({
+function writeUserData(userId, name, email) {
+  firebase.database().ref('users/' + userId + '/personal_info').update({//function to write user data in firebase
     username: name,
     email: email
-  });*/
-  
-  
+  });
+
 }
 
 
+function getTimeNow()
+{
+var currentdate = new Date(); 
+    var datetime = currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+	return datetime;
+}
 
+function appendVehicleSelector(vehicleID , vehicleName){
+   var r= $('<input class="w3-radio"  type="radio" name="userVehicles" value='+vehicleID+' id='+vehicleID+' checked/>  <label class="w3-validate">'+vehicleID+' | '+vehicleName+'</label>  <button type="button" class="w3-btn w3-tiny" id='+vehicleID+'_edit'+'>EDIT</button>'  );
+       $("#userVehicles").append(r);
+
+	document.getElementById(vehicleID+'_edit').onclick = function() {
+	$('#'+vehicleID).prop("checked", true);//checked selected
+	$('#vehicleModal').show();//show vehicle form modal
+	$('#addVehicle').hide();
+	$('#updateVehicle').show();
+	$('#deleteVehicle').show();
+	
+	$('#vehicleID').val(vehicleID);//insert value in Vehicle ID for edit
+	$('#vehicleName').val(vehicleName);//insert vehicle Name
+
+	};
+	
+	
+	  }
 
 
 function checkVINexist( VIN ){
 
+var query = firebase.database().ref('registered_vehicles/'+VIN);//check if VIN exists in the firebase
+query.once("value").then(function(snapshot) {
+ var check = snapshot.exists(); 
 
-  
- 
-  var query = firebase.database().ref('registered_vehicles/'+VIN);
-query.once("value")
-  .then(function(snapshot) {
-    var check = snapshot.exists(); 
-
-console.log(check);
- if(check==false){
-   var r= $('<input type="button" value='+$('#vehicleID').val()+' id='+$('#vehicleID').val()+'/>');
-       $("body").append(r);
-  }
-  else
-  {
-   
-
-
-  alert('Vehicle already registerd');
-  }
-
-	
+ console.log(check);
+ if(check==false){//if Not ,  Add Vehicle in firebase and append button for selection of vehicles
+   var r= $('<input class="w3-radio"  type="radio" name="userVehicles" value='+$('#vehicleID').val()+' id='+$('#vehicleID').val()+'  checked/>  <label class="w3-validate">'+$('#vehicleID').val()+' </label>'  );
+       $("#userVehicles").append(r);
+	   
+	     firebase.database().ref('users/' + uid +'/vehicles/'+ VIN ).update({//function to write user data in firebase 
+	name: $('#vehicleName').val(),
+    dynamic_data: '000',
+	static_data: '000'
   });
-
-
   
- 
+ //  firebase.database().ref('registered_vehicles/'+ VIN ).update({//function to write VIN in registered_vehicles
+ //   date_registered: getTimeNow()
+ // });
+  
+   firebase.database().ref('registered_vehicles/'+ VIN+'/'+uid).update({//function to write owner in registered_vehicles
+    date_registered: getTimeNow()
+  });
+		
+	   
+  }else
+ {alert('Vehicle already registered');}
 
-
+  });
 }
 
 
-function signOUT(){//function signput button
+
+function signOUT(){//function signout button
 	  firebase.auth().signOut().then(function() {
   console.log('Signed Out');
 }, function(error) {
   console.error('Sign Out Error', error);
 });
-window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/fbu/";
+window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/fbu/";//redirect to mainpage
 
 }
 
 
-/*$(function(){
-
-  $('#addVehicle').on('click',function(){
-        var r= $('<input type="button" value='+$('#vehicleID').val()+' id='+$('#vehicleID').val()+'/>');
-        $("body").append(r);
-    });
-	
-});*/
 
 
-function saveVehicleData()
+function saveVehicleData() //add vehicle function 
 {
-//document.getElementsByClassName("close")[0].span.onclick 
+checkVINexist($('#vehicleID').val() );//Check VIN
+$('#vehicleModal').hide(); //Hide Vehicle Modal
+}
 
+function updateVehicleData()//update vehicle function
+{
 
-    // Setup form validation on the #register-form element
- 
+$('#vehicleModal').hide(); //Hide Vehicle Modal
 
+ firebase.database().ref('users/' + uid+ '/vehicles/'+$('#vehicleID').val() ).update({//function to update vehicle name
+    name: $('#vehicleName').val()
+  });
 
-checkVINexist($('#vehicleID').val());
-var span = document.getElementsByClassName("close")[0];
-$('.w3-closebtn').click();
+  console.log('#update performed');
+}
 
-
+function deleteVehicleData()
+{  
+    if (confirm("Warning All data will be erased in this vehicle: OK or Cancel") == true) {
+        $('#vehicleModal').hide(); //Hide Vehicle Modal
+		firebase.database().ref('users/' + uid+ '/vehicles/'+$('#vehicleID').val()).remove();
+		firebase.database().ref('registered_vehicles/'+$('#vehicleID').val()).remove();
+		console.log('#delete performed');
+    } 
 
 }
 
 
 $(document).ready(function () {
 
- $('#register-vehicle').validate({
+        $("#updateVehicle").hide();
+		$("#deleteVehicle").hide();
+
+
+ $('#register-vehicle').validate({//validate vehicle form
    rules: {
-      vehicleID: {required: true,rangelength: [16,20]},
+      vehicleID: {required: true,rangelength: [11,17]},
 	  vehicleName: {required: true,rangelength: [1,30]}
 	  
     },
@@ -181,19 +241,35 @@ $(document).ready(function () {
 
 $('#addVehicle').click(function () {
 
-
-
-
-
         if ($("#register-vehicle").valid()) {
            saveVehicleData();
         }
     });
 	
 
+$('#updateVehicle').click(function () {
 
+        if ($("#register-vehicle").valid()) {
+          updateVehicleData();
+        }
+    });
+	
+$('#deleteVehicle').click(function () {
+		deleteVehicleData();
+      
+    });
 
 });
+
+
+
+function showModalAddVehicle(){
+	$('#vehicleModal').show();//show Modal
+	$('#addVehicle').show();
+	$('#updateVehicle').hide();
+	$('#deleteVehicle').hide();
+
+}
 
 
 
@@ -220,26 +296,28 @@ $('#addVehicle').click(function () {
     <div id="account-details"></div>
 	
 	  
-  <button onclick="document.getElementById('id01').style.display='block'" class="w3-btn">Add Vehicle</button>
+  <button onclick="showModalAddVehicle()" class="w3-btn">Add Vehicle</button>
 
-  <div id="id01" class="w3-modal">
+  <div id="vehicleModal" class="w3-modal">
     <div class="w3-modal-content">
       <div class="w3-container">
-        <span onclick="document.getElementById('id01').style.display='none'" class="w3-closebtn">&times;</span>
+        <span onclick="document.getElementById('vehicleModal').style.display='none'" class="w3-closebtn">&times;</span>
     
 <div class="w3-container w3-blue">
   <h2>Vehicle ID Form</h2>
 </div>
 
-		<form  id="register-vehicle">
+		<form  id="register-vehicle" method="GET" >
 
  <p >Vehicle ID Number</p>
   <input type="text" class="w3-input"  name="vehicleID" id="vehicleID" placeholder="Vehicle ID Number"  maxlength="17" >
   <p style="padding-top: 5px;">Vehicle Name eg.Toyota Vios</p>
-  <input type="text"  class="w3-input" name="vehicleName" placeholder="Vehicle Name"  maxlength="30"  >
+  <input type="text"  class="w3-input" name="vehicleName" id="vehicleName" placeholder="Vehicle Name"  maxlength="30"  >
   <br><br>
   
-  <button type="button" id="addVehicle" class="w3-btn w3-teal" >Save Vehicle Data </button>
+  <button type="button" id="addVehicle" class="w3-btn w3-teal" >Add Vehicle</button>
+<button type="button" id="updateVehicle" class="w3-btn w3-teal">Update Vehicle</button>
+<button type="button" id="deleteVehicle" class="w3-btn w3-teal">Delete Vehicle</button>
 
 </form> 
 
@@ -249,6 +327,11 @@ $('#addVehicle').click(function () {
     </div>
   </div>
 	
+	<form id="userVehicles" action="vehicleData.html">
+	
+	<button type="submit" id="readVehicle" class="w3-btn w3-teal" >Read Vehicle Data</button>
+
+	</form>
 	
 	<button type="button" onclick="signOUT()">signOUT</button>
 	
