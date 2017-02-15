@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Cloud-Based Vehicle Data Monitoring System</title>
+		<link rel="shortcut icon" type="image/png" href="res/icon.png" />
+	<style>
+
+.ui-datepicker-trigger{padding: 5px;}
+
+input#vehicle_ID {text-transform: uppercase;}
+.event a {
+    background-color: #42B373 !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
+</style>
+
+    <!-- *******************************************************************************************
+       * TODO(DEVELOPER): Paste the initialization snippet from:
+       * Firebase Console > Overview > Add Firebase to your web app. *
+       ***************************************************************************************** -->
+	    		   	   <script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
+		   
+
+ <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="lib/w3.css">
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+  
+ <script src="https://cdn.jsdelivr.net/jquery.validation/1.15.1/jquery.validate.min.js"></script>
+ 
+ <script src="lib/canvasjs.min.js"></script>
+<script src="lib/raphael-2.1.4.min.js"></script>
+<script src="lib/justgage.js"></script>
+
+
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCkzwFVCHoe7Hs1RLsR6AAhMxwCvJWzriM",
+    authDomain: "cbvdmsusers.firebaseapp.com",
+    databaseURL: "https://cbvdmsusers.firebaseio.com",
+    storageBucket: "cbvdmsusers.appspot.com",
+    messagingSenderId: "59734821259"
+  };
+  firebase.initializeApp(config);
+</script>
+
+	
+	
+  </head>
+  <body>
+    <h2 id="vehicleNameHead"></h2>
+	 <h5 id="vehicleIDHead"></h5>
+    <div id="sign-in-status"></div>
+   	<button type="button" onclick="signOUT()">signOUT</button>
+	
+  
+ 
+
+
+   <div class="w3-container w3-light-gray w3-padding-4">
+
+<label>Date: </label> <input   type="text" id="datepicker" onchange="loadGraph()" style="width:100px;" readonly>
+
+
+<label>Last</label>
+<select id="numberOfData" class="w3-navbar w3-light-grey" title="select Number Of Data">
+<option value="30">1 Minute</option>
+  <option value="60">2 Minutes</option>
+  <option value="180">15 Minutes</option>
+ <option value="360">30 Minutes</option>
+ <option value="720">1 Hour</option>
+
+</select>
+<label> of Data</label>
+
+<button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
+
+<!--<button class="w3-btn w3-small w3-right w3-ripple w3-teal"  onclick="testT()" style="text-align: center;"><span></span></button>-->
+
+</div>
+
+   <div class="w3-container w3-white w3-padding-4 w3-row" style="z-index: -1;">
+ 
+ <div id="fuel-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+ <div id="temp-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+ <div id="battery-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+
+</div>
+
+
+<div class="w3-padding-tiny w3-row">
+
+<div id="container" class="w3-container" >
+</div>
+
+</div>
+   
+   
+<script>
+var VIN;
+	var owner_ID;
+	
+      initApp = function() {
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            // User is signed in.
+        //    var displayName = user.displayName;
+        //    var email = user.email;
+        //    var emailVerified = user.emailVerified;
+         //   var photoURL = user.photoURL;
+            owner_ID = user.uid;
+			
+          //  var providerData = user.providerData;
+            user.getToken().then(function(accessToken) {
+             document.getElementById('sign-in-status').textContent = 'Signed in';
+			 
+			 //get data page before
+			    var parameters = location.search.substring(1).split("&");
+				var temp = parameters[0].split("=");
+				VIN = unescape(temp[1]);
+				
+				
+
+				
+				loadDays(VIN,owner_ID);
+				loadGraph();
+				
+			
+  var ref = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN);//get Vehicle Name
+ref.once("value").then(function(snapshot) {
+    var name = snapshot.child("name").val(); 
+	$('#vehicleNameHead').text(name);
+  });
+  
+  $('#vehicleIDHead').text("VIN: "+VIN);
+  
+			
+         
+            });
+          } else {
+       
+          document.getElementById('sign-in-status').textContent = 'Sign Out Please Login';
+    
+          }
+        }, function(error) {
+          console.log(error);
+        });
+      };
+
+      window.addEventListener('load', function() {
+        initApp()
+      });
+	  
+	  
+screen.orientation.lock('landscape');
+
+//function input only alphanumeric
+$( function() {
+   $(document).ready(function () {
+    $(document).tooltip({
+        show: {
+            effect: 'slideDown'
+        },
+        track: true,
+        open: function (event, ui) {
+            setTimeout(function () {
+                $(ui.tooltip).hide('fade');
+            }, 2000);
+        }
+    });
+});
+	
+	
+  } );
+  
+
+$(function(){
+    $("#vehicle_ID").keypress(function(event){
+        var ew = event.which;
+        if(48 <= ew && ew <= 57)
+            return true;
+        if(65 <= ew && ew <= 90)
+            return true;
+        if(97 <= ew && ew <= 122)
+            return true;
+        return false;
+    });
+});
+
+//get date now
+
+var d = new Date();
+var month = d.getMonth()+1;
+var day = d.getDate();
+var year=d.getFullYear();
+
+var compDate =  ((''+month).length<2 ? '0' : '') + month + '/' + ((''+day).length<2 ? '0' : '') + day +'/'+ year;
+ 
+ document.getElementById("datepicker").value=compDate;
+
+ var eventDates = {};// eventDates[ new Date( '12/04/2014' )] = new Date( '12/04/2014' );
+//load days with data
+
+ 
+function loadDays(VIN,owner_ID){
+
+
+  var refYear = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN+"/data/log_data");
+ refYear.on("child_added", function(snapshot) {
+
+    var getYear = snapshot.key;
+
+	var refMonth = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN+"/data/log_data/"+getYear);
+ refMonth.on("child_added", function(snapshot) {
+    var getMonth = snapshot.key;
+
+	var refDay = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/log_data/"+getYear+"/"+getMonth);
+ refDay.on("child_added", function(snapshot) {
+    var getDay = snapshot.key;
+	
+        eventDates[ new Date( getMonth+"/"+getDay+"/"+getYear )] = new Date( getMonth+"/"+getDay+"/"+getYear ); //highlight Data with dates 
+		
+		
+		
+		}); 
+    });
+   });
+   
+   }
+   
+
+
+ 
+ 
+ 
+ //calendar highlight day 
+$( function() {
+ 
+        // An array of dates
+      
+
+        // datepicker
+        $("#datepicker").datepicker({
+		   showOn: "button",
+      buttonImage: "res/calendarIcon.png",
+      buttonImageOnly: true,
+      buttonText: "Note: A day that contains data are highlighted with green. see December 2016",	   
+	  
+            beforeShowDay: function( date ) {
+        var highlight = eventDates[date];
+                if( highlight ) {
+                     return [true, "event", "Contains data"];
+                } else {
+                     return [true, '', ''];
+                }
+             }
+			 
+			
+        });	
+    });
+	
+	
+	
+  
+  
+  
+  //draw graphArea
+  var dataRpm=[];
+  var dataSpeed=[];
+  var dataTP=[];
+  
+	var chart;
+	
+function loadChart(){//Draw Chart
+	chart = new CanvasJS.Chart("container", { 
+		zoomEnabled: true,
+		title: {
+			text: ""
+		},
+		
+		 axisX: {  stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
+		  axisY: {  includeZero: false, stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
+		  
+		 legend: {
+            cursor: "pointer",
+            itemclick: function (e) {
+                if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                    e.dataSeries.visible = false;
+                } else {
+                    e.dataSeries.visible = true;
+                }
+                e.chart.render();
+            }
+        },
+		
+		  animationEnabled: true,
+		data: [
+      {        
+        type: "line", yValueFormatString:"### RPMx(1OO)",showInLegend: true,legendText: "RPM",
+        dataPoints: dataRpm
+      },
+        {        
+        type: "line", yValueFormatString:"####### KmH",showInLegend: true,legendText: "Speed",
+        dataPoints: dataSpeed
+      },
+        {        
+        type: "line", yValueFormatString:"### &percnt;",showInLegend: true,legendText: "Throttle Pos.",
+        dataPoints: dataTP
+      }
+      ]
+	});
+chart.render();
+ $("#dataHours option:last").attr("selected", "selected");	
+ }
+ 
+	
+ //addStripline when a point is being mouse over or click //mouseover: onMouseover
+ loadChart();
+ 
+ function signOUT(){//function signout button
+	  firebase.auth().signOut().then(function() {
+  console.log('Signed Out');
+}, function(error) {
+  console.error('Sign Out Error', error);
+});
+window.location.href = "/fbu";//redirect to mainpage
+
+}
+ 
+
+  function onClick(e) {
+		
+ 	chart.options.axisX.stripLines[0].value = e.dataPoint.x;
+	
+	var unitx;
+	
+	if(e.dataSeries.legendText=="RPM")
+	{
+   unitx=" RPM";
+	}
+	else if(e.dataSeries.legendText=="Speed")
+	{
+	unitx=" KmH";
+	}
+	chart.options.axisX.stripLines[0].label = e.dataPoint.y+unitx;
+	
+    chart.options.axisY.stripLines[0].value = e.dataPoint.y;
+    chart.render();		
+		
+	}
+ 	
+//-------------------------------------------------Firebase------------------//
+//get Time, Rpm and Speed
+var i=dataRpm.length+1;
+var getTime,getRpm,getSpeed;
+///////////////
+//////////////
+function loadGraph(){
+var t0 = performance.now();
+loadLiveData();
+ 
+loadChart();
+//get Time, Rpm and Speed
+var datePick = $("#datepicker").val().split("/");
+var yy= datePick[2];
+var mm = datePick[0];
+var dd = datePick[1];
+var refx;
+
+var NofData= parseInt($( "#numberOfData option:selected" ).val());
+
+
+
+var ref = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/log_data/"+yy+"/"+mm+"/"+dd).limitToLast(NofData);
+//var onValueChange=
+ ref.on("child_added", function(snapshot) {
+ //var arrayTime=[];
+getTime = snapshot.key;
+getRpm=snapshot.child("Rpm").val();  
+getSpeed=snapshot.child("Speed").val();  
+getTP=snapshot.child("ThrottlePos").val();  
+	chart.options.title.text = mm+" - " +dd+ " - "+yy;
+	dataRpm.push({y: getRpm/100 , x:i , label: getTime,click: onClick});
+	dataSpeed.push({y: getSpeed, x:i ,label: getTime,click: onClick});
+	dataTP.push({y: getTP, x:i ,label: getTime,click: onClick});
+	
+	i++;
+		
+	if (dataRpm.length > NofData)
+      	{
+      	dataRpm.shift();	
+		dataSpeed.shift();
+		dataTP.shift();
+      	}
+		
+	chart.render();	
+	
+	 
+  });
+  
+
+var t1 = performance.now();
+console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.")
+ 
+} 
+ 
+ 
+ function testT()
+ {
+ //loadGraph().then(function(datax) { console.log(datax) });
+ //console.log(tempRef);
+ }
+var now = new Date();
+var delay = 60 * 60 * 1000; // 1 hour in msec
+var start = delay - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
+setTimeout(function doSomething() {//refresh graph every hour
+	   refreshChart();
+	   offCheck();
+   // schedule the next tick
+   setTimeout(doSomething, delay);
+}, start);
+//---------------button pause and play------------------------//
+ var state = true;
+$("#btnToggleState").text('PAUSE');
+function pauseState() {
+  
+  if(state){
+ firebase.database().goOffline();
+state=false;
+$("#btnToggleState").text('PLAY');
+ }
+else
+{
+firebase.database().goOnline();
+state=true;
+$("#btnToggleState").text('PAUSE');
+}
+}
+function refreshChart(){//clear chart then refresh data
+
+chart.data[0].remove();
+chart.data[0].remove();
+dataRpm=[];
+dataSpeed=[];
+dataTP=[];
+loadGraph();
+ 
+
+}
+    $("#datepicker").change(function(){//fuction value when change calendar
+	
+	offCheck();
+	   refreshChart();
+	
+    });
+	
+	
+	
+	
+	
+    $("#dataHours").change(function(){//when hours selected changed 
+		
+		//alert($("#dataHours").find(':selected').val()+"!="+hours+" && "+compDate +"!="+$("#datepicker").val())
+	
+	offCheck();
+	 refreshChart();
+	
+    });
+	
+	  $("#numberOfData").change(function(){// when # of Data changed
+	   refreshChart();
+    });
+	
+	
+	function offCheck()//check if selected date or time is realtime or not
+	{
+		var datePicked=$("#datepicker").val();
+		
+		//alert(hoursPicked+"!="+ hours)
+	if (datePicked!=compDate)
+	{
+		firebase.database().goOffline()
+	}
+	else
+	{
+	firebase.database().goOnline()
+	}
+	
+	}
+	
+	
+	
+	//----------------------------------------------------Gauge
+var $myFuelGauge,$myBatteryGauge, $myTempGauge;
+var fuel;
+  $myFuelGauge = new JustGage({
+    id: "fuel-gauge",
+    value: getFuel,
+    min: 0,
+    max: 100,
+    //title: "Lone Ranger",
+	levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
+    label: "Fuel %"
+  });
+  
+   $myBatteryGauge = new JustGage({
+    id: "battery-gauge",
+    value: getBat,
+    min: 0,
+    max: 100,
+    //title: "Lone Ranger",
+	levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
+    label: "Battery %"
+  });
+  
+   $myTempGauge = new JustGage({
+    id: "temp-gauge",
+    value: getTemp,
+    min: 0,
+    max: 100,
+    //title: "Lone Ranger",
+	//unit: "%",
+    label: "Temp. %"
+  });
+  
+var getFuel,getTemp,getBat;
+function loadLiveData() {//load live Data
+
+
+var refLive = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/live_data");
+//var onValueChange=
+ refLive.on("value", function(snapshot) {
+ //var arrayTime=[];
+ 
+getFuel = snapshot.child("Fuel").val();
+getTemp=snapshot.child("Temp").val();  
+getBat=snapshot.child("Battery").val();  
+$myFuelGauge.refresh(getFuel);
+$myTempGauge.refresh(getTemp);
+$myBatteryGauge.refresh(getBat);
+ 
+  });
+}
+
+
+
+//----------------------------------------------------Gauge
+</script>
+
+  </body>
+</html>
