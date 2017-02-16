@@ -305,7 +305,7 @@ function loadChart(){//Draw Chart
 		  animationEnabled: true,
 		data: [
       {        
-        type: "line", yValueFormatString:"### RPMx(1OO)",showInLegend: true,legendText: "RPM",
+        type: "line", yValueFormatString:"### RPM",showInLegend: true,legendText: "RPM",
         dataPoints: dataRpm
       },
         {        
@@ -389,7 +389,7 @@ getRpm=snapshot.child("Rpm").val();
 getSpeed=snapshot.child("Speed").val();  
 getTP=snapshot.child("ThrottlePos").val();  
 	chart.options.title.text = mm+" - " +dd+ " - "+yy;
-	dataRpm.push({y: getRpm/100 , x:i , label: getTime,click: onClick});
+	dataRpm.push({y: getRpm , x:i , label: getTime,click: onClick});
 	dataSpeed.push({y: getSpeed, x:i ,label: getTime,click: onClick});
 	dataTP.push({y: getTP, x:i ,label: getTime,click: onClick});
 	
