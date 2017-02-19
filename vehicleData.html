@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <title>Cloud-Based Vehicle Data Monitoring System</title>
-		<link rel="shortcut icon" type="image/png" href="res/icon.png" />
-	<style>
+<link rel="shortcut icon" type="image/png" href="res/icon.png" />
+<style>
 
 .ui-datepicker-trigger{padding: 5px;}
 
@@ -20,8 +20,8 @@ input#vehicle_ID {text-transform: uppercase;}
        * TODO(DEVELOPER): Paste the initialization snippet from:
        * Firebase Console > Overview > Add Firebase to your web app. *
        ***************************************************************************************** -->
-	    		   	   <script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
-		   
+          <script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
+   
 
  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -53,15 +53,15 @@ input#vehicle_ID {text-transform: uppercase;}
   firebase.initializeApp(config);
 </script>
 
-	
-	
+
+
   </head>
   <body>
     <h2 id="vehicleNameHead"></h2>
-	 <h5 id="vehicleIDHead"></h5>
+ <h5 id="vehicleIDHead"></h5>
     <div id="sign-in-status"></div>
-   	<button type="button" onclick="signOUT()">signOUT</button>
-	
+  <button class="w3-btn w3-hover-indigo" type="button" onclick="signOUT()">Sign Out</button>
+
   
  
 
@@ -83,6 +83,7 @@ input#vehicle_ID {text-transform: uppercase;}
 <label> of Data</label>
 
 <button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
+ <button class="w3-btn w3-small w3-right w3-hover-blue" onclick="document.getElementById('id01').style.display='block'" class="w3-btn">PID</button>
 
 <!--<button class="w3-btn w3-small w3-right w3-ripple w3-teal"  onclick="testT()" style="text-align: center;"><span></span></button>-->
 
@@ -104,12 +105,31 @@ input#vehicle_ID {text-transform: uppercase;}
 
 </div>
    
+
+<div id="id01" class="w3-modal">
+ <div class="w3-modal-content w3-card-4 w3-animate-zoom">
+ 
+ <div class="w3-container ">
+  <header class="w3-container w3-blue"> 
+   <span onclick="document.getElementById('id01').style.display='none'" 
+   class="w3-closebtn w3-padding-top">&times;</span>
+   <h2>Supported PID's</h2>
+  </header>
+<label>MODE01:</label>
+   <p class="w3-small" id="PID_vars"></p>
+   </div>
+   
+ </div>
+</div>
+
    
 <script>
 var VIN;
-	var owner_ID;
-	
-      initApp = function() {
+var owner_ID;
+var latestSnapshot = null;
+var PID_supported_var=[] ;
+var PIDx;
+	  initApp = function() {
         firebase.auth().onAuthStateChanged(function(user) {
           if (user) {
             // User is signed in.
@@ -118,37 +138,120 @@ var VIN;
         //    var emailVerified = user.emailVerified;
          //   var photoURL = user.photoURL;
             owner_ID = user.uid;
-			
+
           //  var providerData = user.providerData;
             user.getToken().then(function(accessToken) {
-             document.getElementById('sign-in-status').textContent = 'Signed in';
-			 
-			 //get data page before
-			    var parameters = location.search.substring(1).split("&");
-				var temp = parameters[0].split("=");
-				VIN = unescape(temp[1]);
-				
-				
+             document.getElementById('sign-in-status').textContent = 'STATUS: Signed in';
+ 
+ //get data page before
+    var parameters = location.search.substring(1).split("&");
+var temp = parameters[0].split("=");
+VIN = unescape(temp[1]);
 
-				
-				loadDays(VIN,owner_ID);
-				loadGraph();
-				
-			
+
+function getPID_var(){
+
+ var ref = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN+"/data/supported_var_PIDs");//get PID_vars Name
+return ref.once("value").then(getPIDx);
+  }
+ function getPIDx(snapshot) {  var x = snapshot.val().split(''); return x;} //Handle Async Firebase user promises
+
+
+
+ //console.log(latestSnapshot); 
+	
+
+
+loadDays(VIN,owner_ID);
+
+loadChart();
+loadDataAndGraph();
+
+function loadDataAndGraph(){
+ getPID_var().then(function(PID){
+ //"000000000001111000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+ //"000111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000"
+ //"000111100001111110001000000000101001000000000100001100000001010000000000000000000000000000000000"
+ PID_supported_var=PID;
+ PID_supported_index=[];
+
+ var p;
+ for (i = 0; i < PID_supported_var.length; i++) { 
+		p=i+1;
+   if(PID_supported_var[i]==1){
+			PID_supported_index.push(p);
+   }
+}
+
+
+for (i = 0; i < PID_supported_index.length; i++) { 
+chart.options.data.push({type: "line",yValueFormatString:PID_var_list[ (PID_supported_index[i])-1 ][0],showInLegend: true,legendText: PID_var_list[ (PID_supported_index[i])-1 ][1],dataPoints: data_var[ PID_supported_index[i]]=[] });
+
+ }
+
+ chart.render();
+
+ loadGraph();
+
+
+
+ } );
+ }
+ 
+ 
+ 
+function refreshChart(){//clear chart then refresh data
+
+//chart.data[0].remove();
+console.log('#startRefresh')
+
+for(var v=0; v<PID_var_list.length;v++)
+{
+if(data_var[PID_supported_index[v]]!=undefined){
+     data_var[PID_supported_index[v]]=[]; 
+	}
+}
+var chartDataLength = chart.data.length;
+
+ for(var x=0;x<chartDataLength;x++)
+ {
+
+ chart.data[0].remove();
+
+ 
+ }
+ 
+
+console.log('#refresh-Chart')
+
+
+loadDataAndGraph();
+
+}
+
+
+
+  $("#numberOfData").change(function(){// when # of Data changed
+   refreshChart();
+    });
+
+
+  
+
   var ref = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN);//get Vehicle Name
 ref.once("value").then(function(snapshot) {
     var name = snapshot.child("name").val(); 
-	$('#vehicleNameHead').text(name);
+$('#vehicleNameHead').text(name);
   });
   
   $('#vehicleIDHead').text("VIN: "+VIN);
   
-			
+
          
             });
           } else {
        
-          document.getElementById('sign-in-status').textContent = 'Sign Out Please Login';
+          document.getElementById('sign-in-status').textContent = 'STATUS: Sign Out Please Login';
     
           }
         }, function(error) {
@@ -157,10 +260,12 @@ ref.once("value").then(function(snapshot) {
       };
 
       window.addEventListener('load', function() {
-        initApp()
+        initApp();
+		
+		
       });
-	  
-	  
+  
+ 
 screen.orientation.lock('landscape');
 
 //function input only alphanumeric
@@ -178,8 +283,8 @@ $( function() {
         }
     });
 });
-	
-	
+
+
   } );
   
 
@@ -196,6 +301,8 @@ $(function(){
     });
 });
 
+
+  
 //get date now
 
 var d = new Date();
@@ -210,6 +317,7 @@ var compDate =  ((''+month).length<2 ? '0' : '') + month + '/' + ((''+day).lengt
  var eventDates = {};// eventDates[ new Date( '12/04/2014' )] = new Date( '12/04/2014' );
 //load days with data
 
+
  
 function loadDays(VIN,owner_ID){
 
@@ -219,19 +327,19 @@ function loadDays(VIN,owner_ID){
 
     var getYear = snapshot.key;
 
-	var refMonth = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN+"/data/log_data/"+getYear);
+var refMonth = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN+"/data/log_data/"+getYear);
  refMonth.on("child_added", function(snapshot) {
     var getMonth = snapshot.key;
 
-	var refDay = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/log_data/"+getYear+"/"+getMonth);
+var refDay = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/log_data/"+getYear+"/"+getMonth);
  refDay.on("child_added", function(snapshot) {
     var getDay = snapshot.key;
-	
+
         eventDates[ new Date( getMonth+"/"+getDay+"/"+getYear )] = new Date( getMonth+"/"+getDay+"/"+getYear ); //highlight Data with dates 
-		
-		
-		
-		}); 
+
+
+
+}); 
     });
    });
    
@@ -250,11 +358,11 @@ $( function() {
 
         // datepicker
         $("#datepicker").datepicker({
-		   showOn: "button",
+   showOn: "button",
       buttonImage: "res/calendarIcon.png",
       buttonImageOnly: true,
-      buttonText: "Note: A day that contains data are highlighted with green. see December 2016",	   
-	  
+      buttonText: "Note: A day that contains data are highlighted with green. see December 2016",   
+  
             beforeShowDay: function( date ) {
         var highlight = eventDates[date];
                 if( highlight ) {
@@ -263,34 +371,146 @@ $( function() {
                      return [true, '', ''];
                 }
              }
-			 
-			
-        });	
+ 
+
+        });
     });
-	
-	
-	
+
+
+
   
   
   
   //draw graphArea
-  var dataRpm=[];
-  var dataSpeed=[];
-  var dataTP=[];
+
+
   
-	var chart;
-	
+
+ 
+
+
+ 
+ 
+ 
+ 
+ ///PID_var Dictionary LIST
+ PID_var_list = [["N/A","N/A"],
+["N/A","N/A"],
+["N/A","N/A"],
+["###.## &percnt","Calculated Engine Load"],
+["####.## &#8451;","Engine Coolant Temperature"],
+["###.## &percnt","Short Term Fuel Trim - Bank 1"],
+["###.## &percnt","Long Term Fuel Trim - Bank 1"],
+["###.## &percnt","Short Term Fuel Trim - Bank 2"],
+["###.## &percnt","Long Term Fuel Trim - Bank 2"],
+["####.## KPa","Fuel Pressure"],
+["####.## KPa","Intake Manifold Pressure"],
+["####.## rpm","Engine RPM"],
+["####.## KmH","Vehicle Speed"],
+["####.## deg","Timing Advance"],
+["####.## &#8451;","Intake Air Temp"],
+["####.## g/s","Air Flow Rate (MAF)"],
+["###.## &percnt","Throttle Position"],
+["N/A","N/A"],
+["N/A","N/A"],
+["####.## V","O2: Bank 1 - Sensor 1 Voltage"],
+["####.## V","O2: Bank 1 - Sensor 2 Voltage"],
+["####.## V","O2: Bank 1 - Sensor 3 Voltage"],
+["####.## V","O2: Bank 1 - Sensor 4 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 1 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 2 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 3 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 4 Voltage"],
+["N/A","N/A"],
+["N/A","N/A"],
+["N/A","N/A"],
+["####.## s","Engine Run Time"],
+["N/A",""],
+["####.## Km","Distance Traveled with MIL on"],
+["####.## KPa","Fuel Rail Pressure (relative to vacuum)"],
+["####.## KPa","Fuel Rail Pressure (direct inject)"],
+["####.## V","02 Sensor 1 WR Lambda Voltage"],
+["####.## V","02 Sensor 2 WR Lambda Voltage"],
+["####.## V","02 Sensor 3 WR Lambda Voltage"],
+["####.## V","02 Sensor 4 WR Lambda Voltage"],
+["####.## V","02 Sensor 5 WR Lambda Voltage"],
+["####.## V","02 Sensor 6 WR Lambda Voltage"],
+["####.## V","02 Sensor 7 WR Lambda Voltage"],
+["####.## V","02 Sensor 8 WR Lambda Voltage"],
+["###.## &percnt","Commanded EGR"],
+["###.## &percnt","EGR Error"],
+["###.## &percnt","Commanded Evaporative Purge"],
+["###.## &percnt","Fuel Level Input"],
+["N/A","N/A"],
+["N/A","N/A"],
+["####.## Pa","Evaporative system vapor pressure"],
+["####.## KPa","Barometric Pressure"],
+["####.## mA","02 Sensor 1 WR Lambda Current"],
+["####.## mA","02 Sensor 2 WR Lambda Current"],
+["####.## mA","02 Sensor 3 WR Lambda Current"],
+["####.## mA","02 Sensor 4 WR Lambda Current"],
+["####.## mA","02 Sensor 5 WR Lambda Current"],
+["####.## mA","02 Sensor 6 WR Lambda Current"],
+["####.## mA","02 Sensor 7 WR Lambda Current"],
+["####.## mA","02 Sensor 8 WR Lambda Current"],
+["####.## &#8451;","Catalyst Temperature: Bank 1 - Sensor 1"],
+["####.## &#8451;","Catalyst Temperature: Bank 2 - Sensor 1"],
+["####.## &#8451;","Catalyst Temperature: Bank 1 - Sensor 2"],
+["####.## &#8451;","Catalyst Temperature: Bank 2 - Sensor 2"],
+["N/A","N/A"],
+["N/A","N/A"],
+["####.## V","Control module voltage"],
+["###.## &percnt","Absolute load value"],
+["####.## ratio","Commanded equivalence ratio"],
+["###.## &percnt","Relative throttle position"],
+["####.## &#8451;","Ambient air temperature"],
+["###.## &percnt","Absolute throttle position B"],
+["###.## &percnt","Absolute throttle position C"],
+["###.## &percnt","Accelerator pedal position D"],
+["###.## &percnt","Accelerator pedal position E"],
+["###.## &percnt","Accelerator pedal position F"],
+["###.## &percnt","Commanded throttle actuator"],
+["####.## min","Time run with MIL on"],
+["N/A","N/A"],
+["N/A","N/A"],
+["####.## g/s","Maximum value for mass air flow sensor"],
+["N/A","N/A"],
+["###.## &percnt","Ethanol Fuel Percent"],
+["####.## KPa","Absolute Evap system Vapor Pressure"],
+["####.## Pa","Evap system vapor pressure"],
+["###.## &percnt","Short term secondary O2 trim - Bank 1"],
+["###.## &percnt","Long term secondary O2 trim - Bank 1"],
+["###.## &percnt","Short term secondary O2 trim - Bank 2"],
+["###.## &percnt","Long term secondary O2 trim - Bank 2"],
+["####.## KPa","Fuel rail pressure (absolute)"],
+["###.## &percnt","Relative accelerator pedal position"],
+["###.## &percnt","Hybrid battery pack remaining life"],
+["####.## &#8451;","Engine oil temperature"],
+["####.## deg","Fuel injection timing"],
+["####.## L/h","Engine fuel rate"],
+["N/A","N/A"],
+["N/A","N/A"]];
+
+
+ //PID_var Dictionary
+ 
+var data_var=[];
+
+var chart;
+
 function loadChart(){//Draw Chart
-	chart = new CanvasJS.Chart("container", { 
-		zoomEnabled: true,
-		title: {
-			text: ""
-		},
-		
-		 axisX: {  stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
-		  axisY: {  includeZero: false, stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]	},
-		  
-		 legend: {
+chart = new CanvasJS.Chart("container", { 
+zoomEnabled: true,
+title: {
+text: ""
+},
+
+ axisX: {  stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]},
+  axisY: {  includeZero: false, stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]},
+  
+ legend: {
+ horizontalAlign: "left", // left, center ,right 
+     verticalAlign: "center",  // top, center, bottom
             cursor: "pointer",
             itemclick: function (e) {
                 if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
@@ -301,116 +521,134 @@ function loadChart(){//Draw Chart
                 e.chart.render();
             }
         },
-		
-		  animationEnabled: true,
-		data: [
-      {        
-        type: "line", yValueFormatString:"### RPM",showInLegend: true,legendText: "RPM",
-        dataPoints: dataRpm
-      },
-        {        
-        type: "line", yValueFormatString:"####### KmH",showInLegend: true,legendText: "Speed",
-        dataPoints: dataSpeed
-      },
-        {        
-        type: "line", yValueFormatString:"### &percnt;",showInLegend: true,legendText: "Throttle Pos.",
-        dataPoints: dataTP
-      }
-      ]
-	});
-chart.render();
- $("#dataHours option:last").attr("selected", "selected");	
+
+  animationEnabled: true,
+data: [ ]
+  
+});
+
+
+
+//data_SPEED.push({y: 0, x:0 ,label: 0,click: onClick});
+
+
+
+//chart.data[0].remove(); //<<remove unsupported PID's
  }
  
-	
+
  //addStripline when a point is being mouse over or click //mouseover: onMouseover
- loadChart();
- 
+
  function signOUT(){//function signout button
-	  firebase.auth().signOut().then(function() {
+  firebase.auth().signOut().then(function() {
   console.log('Signed Out');
 }, function(error) {
   console.error('Sign Out Error', error);
 });
-window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/";//redirect to mainpage
+window.location.href ="https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/";//redirect to mainpage
 
 }
  
 
   function onClick(e) {
-		
- 	chart.options.axisX.stripLines[0].value = e.dataPoint.x;
-	
-	var unitx;
-	
-	if(e.dataSeries.legendText=="RPM")
-	{
+
+ chart.options.axisX.stripLines[0].value = e.dataPoint.x;
+
+var unitx;
+
+if(e.dataSeries.legendText=="RPM")
+{
    unitx=" RPM";
-	}
-	else if(e.dataSeries.legendText=="Speed")
-	{
-	unitx=" KmH";
-	}
-	chart.options.axisX.stripLines[0].label = e.dataPoint.y+unitx;
-	
+}
+else if(e.dataSeries.legendText=="Speed")
+{
+unitx=" KmH";
+}
+chart.options.axisX.stripLines[0].label = e.dataPoint.y+unitx;
+
     chart.options.axisY.stripLines[0].value = e.dataPoint.y;
-    chart.render();		
-		
-	}
- 	
+    chart.render();
+
+}
+ 
 //-------------------------------------------------Firebase------------------//
 //get Time, Rpm and Speed
-var i=dataRpm.length+1;
+
 var getTime,getRpm,getSpeed;
 ///////////////
 //////////////
 function loadGraph(){
 var t0 = performance.now();
 loadLiveData();
+ console.log(chart.data.length);
  
-loadChart();
 //get Time, Rpm and Speed
 var datePick = $("#datepicker").val().split("/");
 var yy= datePick[2];
 var mm = datePick[0];
 var dd = datePick[1];
 var refx;
-
+var z=0;
 var NofData= parseInt($( "#numberOfData option:selected" ).val());
+console.log('#no.of Data selected = '+NofData);
 
+var i=data_var[PID_supported_index[0]].length+1;
+console.log(i);
 
-
+//console.log(PID_supported_index)
 var ref = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/log_data/"+yy+"/"+mm+"/"+dd).limitToLast(NofData);
 //var onValueChange=
  ref.on("child_added", function(snapshot) {
  //var arrayTime=[];
+
+chart.options.title.text = mm+" - " +dd+ " - "+yy;
+//data_RPM.push({y: getRpm , x:i , label: getTime,click: onClick});
+//data_SPEED.push({y: getSpeed, x:i ,label: getTime,click: onClick});
+//data_THROTTLE_POS.push({y: getTP, x:i ,label: getTime,click: onClick});
+
+
+snapshot.forEach(function(item) {
 getTime = snapshot.key;
-getRpm=snapshot.child("Rpm").val();  
-getSpeed=snapshot.child("Speed").val();  
-getTP=snapshot.child("ThrottlePos").val();  
-	chart.options.title.text = mm+" - " +dd+ " - "+yy;
-	dataRpm.push({y: getRpm , x:i , label: getTime,click: onClick});
-	dataSpeed.push({y: getSpeed, x:i ,label: getTime,click: onClick});
-	dataTP.push({y: getTP, x:i ,label: getTime,click: onClick});
-	
-	i++;
-		
-	if (dataRpm.length > NofData)
+
+        var yData = item.val();
+ 
+if(data_var[PID_supported_index[z]]!=undefined){
+
+data_var[PID_supported_index[z]].push({y: yData, x:i ,label: getTime,click: onClick});
+
+
+if (data_var[PID_supported_index[z]].length > NofData)
       	{
-      	dataRpm.shift();	
-		dataSpeed.shift();
-		dataTP.shift();
+      data_var[PID_supported_index[z]].shift();
       	}
 		
-	chart.render();	
-	
-	 
+
+	}
+			
+z++;
+
+});
+i++;
+z=0;
+
+
+chart.render();	
+
+
+
+
+
+ 
+ 
+
+
+ 
   });
-  
+
 
 var t1 = performance.now();
 console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.")
- 
+
 } 
  
  
@@ -423,8 +661,8 @@ var now = new Date();
 var delay = 60 * 60 * 1000; // 1 hour in msec
 var start = delay - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
 setTimeout(function doSomething() {//refresh graph every hour
-	   refreshChart();
-	   offCheck();
+   refreshChart();
+   offCheck();
    // schedule the next tick
    setTimeout(doSomething, delay);
 }, start);
@@ -445,61 +683,36 @@ state=true;
 $("#btnToggleState").text('PAUSE');
 }
 }
-function refreshChart(){//clear chart then refresh data
 
-chart.data[0].remove();
-chart.data[0].remove();
-dataRpm=[];
-dataSpeed=[];
-dataTP=[];
-loadGraph();
- 
+    $("#datepicker").change(function(){//fuction value when change calendar
+
+offCheck();
+   refreshChart();
+
+    });
+
+
+
+
+function offCheck()//check if selected date or time is realtime or not
+{
+var datePicked=$("#datepicker").val();
+
+//alert(hoursPicked+"!="+ hours)
+if (datePicked!=compDate)
+{
+firebase.database().goOffline()
+}
+else
+{
+firebase.database().goOnline()
+}
 
 }
-    $("#datepicker").change(function(){//fuction value when change calendar
-	
-	offCheck();
-	   refreshChart();
-	
-    });
-	
-	
-	
-	
-	
-    $("#dataHours").change(function(){//when hours selected changed 
-		
-		//alert($("#dataHours").find(':selected').val()+"!="+hours+" && "+compDate +"!="+$("#datepicker").val())
-	
-	offCheck();
-	 refreshChart();
-	
-    });
-	
-	  $("#numberOfData").change(function(){// when # of Data changed
-	   refreshChart();
-    });
-	
-	
-	function offCheck()//check if selected date or time is realtime or not
-	{
-		var datePicked=$("#datepicker").val();
-		
-		//alert(hoursPicked+"!="+ hours)
-	if (datePicked!=compDate)
-	{
-		firebase.database().goOffline()
-	}
-	else
-	{
-	firebase.database().goOnline()
-	}
-	
-	}
-	
-	
-	
-	//----------------------------------------------------Gauge
+
+
+
+//----------------------------------------------------Gauge
 var $myFuelGauge,$myBatteryGauge, $myTempGauge;
 var fuel;
   $myFuelGauge = new JustGage({
@@ -508,7 +721,7 @@ var fuel;
     min: 0,
     max: 100,
     //title: "Lone Ranger",
-	levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
+levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
     label: "Fuel %"
   });
   
@@ -518,7 +731,7 @@ var fuel;
     min: 0,
     max: 100,
     //title: "Lone Ranger",
-	levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
+levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
     label: "Battery %"
   });
   
@@ -528,27 +741,39 @@ var fuel;
     min: 0,
     max: 100,
     //title: "Lone Ranger",
-	//unit: "%",
+//unit: "%",
     label: "Temp. %"
   });
   
 var getFuel,getTemp,getBat;
 function loadLiveData() {//load live Data
-
-
-var refLive = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/live_data");
+console.log(owner_ID+"--"+VIN)
+var dateObj = new Date();
+var month = ("0"+(dateObj.getUTCMonth() + 1)).slice(-2); //months from 1-12
+var day = ("0"+dateObj.getUTCDate()).slice(-2);
+var year = dateObj.getUTCFullYear();
+console.log(year+"--"+month+"--"+day)
+var refLive = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/log_data/"+year+"/"+month+"/"+day);
 //var onValueChange=
- refLive.on("value", function(snapshot) {
+ refLive.limitToLast(1).on("child_added", function(snapshot) {
  //var arrayTime=[];
+ var getT=snapshot.key;
  
-getFuel = snapshot.child("Fuel").val();
-getTemp=snapshot.child("Temp").val();  
-getBat=snapshot.child("Battery").val();  
+
+ refLive.on("value", function(item) {
+getFuel = item.child(getT).child(47).val();
+getTemp=item.child(getT).child(05).val();  
+getBat=item.child(getT).child(42).val();
+  
 $myFuelGauge.refresh(getFuel);
 $myTempGauge.refresh(getTemp);
 $myBatteryGauge.refresh(getBat);
+});
+
+
  
   });
+  
 }
 
 
