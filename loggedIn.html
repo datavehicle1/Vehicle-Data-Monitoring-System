@@ -77,7 +77,7 @@ query.once("value")
 	
 
             user.getToken().then(function(accessToken) {
-              $('#sign-in-status').text('Signed In');
+              $('#sign-in-status').text('STATUS: Signed In');
           $('#user-email').text(email);
          
            
@@ -92,14 +92,18 @@ query.once("value")
 				
               }, null, '  ');*/
             });
-          } else {
+          }
+
+		  else {
             // User is signed out.
-            $('#sign-in-status').text('Signed Out Please Login or Register');
+            $('#sign-in-status').text('STATUS: Signed Out Please Login or Register');
          
             
           }
         }, function(error) {
           console.log(error);
+		   
+			
         });
       };
 
@@ -131,7 +135,7 @@ var currentdate = new Date();
 
 function appendVehicleSelector(vehicleID , vehicleName){
 
-   var r= $('<input class="w3-radio"  type="radio" name="userVehicles" value='+vehicleID+' id='+vehicleID+' checked/>  <label class="w3-validate" id='+vehicleID+'_label>'+vehicleID+' | '+vehicleName+'</label>  <button type="button" class="w3-btn w3-tiny" id='+vehicleID+'_edit'+'>EDIT</button>'  );
+   var r= $('<div class="w3-row"> <input class="w3-radio"  type="radio" name="userVehicles" value='+vehicleID+' id='+vehicleID+' checked/>  <label class="w3-validate" id='+vehicleID+'_label>'+vehicleID+' | '+vehicleName+'</label>  <button type="button" class="w3-btn w3-tiny" id='+vehicleID+'_edit'+'>EDIT</button> </div>'  );
        $("#userVehicles").append(r);
 
 	document.getElementById(vehicleID+'_edit').onclick = function() {
@@ -318,7 +322,7 @@ function showModalAddVehicle(){
 	<div id="user-email"></div>
 
 	  
-  <button onclick="showModalAddVehicle()" class="w3-btn">Add Vehicle</button>
+
 
   <div id="vehicleModal" class="w3-modal">
     <div class="w3-modal-content">
@@ -349,13 +353,17 @@ function showModalAddVehicle(){
     </div>
   </div>
 	
-	<form id="userVehicles" action="vehicleData.html">
+	<form id="userVehicles" action="vehicleData.html" class="w3-container" >
 	
+	  <button type="button" onclick="showModalAddVehicle()" class="w3-btn">Add Vehicle</button>
 	<button type="submit" id="readVehicle" class="w3-btn w3-teal" >Read Vehicle Data</button>
 
 	</form>
 	
-	<button type="button" onclick="signOUT()">signOUT</button>
+	<button class="w3-btn w3-hover-indigo" type="button" onclick="signOUT()">Sign Out</button>
+	
+	
+	
 	
 	<script>
 	  $(function(){
