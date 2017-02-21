@@ -221,22 +221,7 @@ PID_ans += pad(( (parseInt(PID_val[x],2) & parseInt( user_sel_PID[x],2)) ).toStr
 
  PID_supported_index=[];
 
- var p;
-  //==========================================================================================================<Without User Choice original supported PIDS
-for (i = 0; i < PID_supported_var_org.length; i++) {//store PID_supported_var original ***without user choice 
-		p=i+1;
-   if(PID_supported_var_org[i]==1){
-			PID_supported_index_org.push(p);
-   }
-}
-
-for(i = 0; i<PID_supported_index_org.length;i++){//get pids and append **checkboxes
-
-var unitVal = PID_var_list[ (PID_supported_index_org[i])-1 ][0];
-var legendTextVal=PID_var_list[ (PID_supported_index_org[i])-1 ][1];
-
-$('<input class="w3-check w3-small" name='+PID_supported_index_org[i]+' id='+PID_supported_index_org[i]+' type="checkbox" > <label class="w3-validate">'+legendTextVal+'</label> </br>').insertBefore( "#saveSelectedPID" );
-  }
+appendPIDCheckboxes();
   
   //==========================================================================================================<With User Choice PIDS
  for (i = 0; i < PID_supported_var.length; i++) {//store PID_supported_var ***w/ user choice 
@@ -256,6 +241,8 @@ chart.options.data.push({type: "line",yValueFormatString:unitVal,showInLegend: t
 
 $( "#"+PID_supported_index[i] ).prop( "checked", true );//check user choice PID's
  }
+
+ 
 
  
 
@@ -287,12 +274,40 @@ var chartDataLength = chart.data.length;
  {
  chart.data[0].remove();
  }
+ 
+    $('input[name=PID_checks]').remove();
+    $('label[name=PID_checks]').remove();
+ $('#check_PIDS').find('br').remove();
+ 
+	
+
+ 
  chart.render();
 console.log('#refresh-Chart')
 loadDataAndGraph();
 }
 
 
+ function appendPIDCheckboxes(){
+  var p;
+  //==========================================================================================================<Without User Choice original supported PIDS
+for (i = 0; i < PID_supported_var_org.length; i++) {//store PID_supported_var original ***without user choice 
+		p=i+1;
+   if(PID_supported_var_org[i]==1){
+			PID_supported_index_org.push(p);
+   }
+}
+
+for(i = 0; i<PID_supported_index_org.length;i++){//get pids and append **checkboxes
+
+var unitVal = PID_var_list[ (PID_supported_index_org[i])-1 ][0];
+var legendTextVal=PID_var_list[ (PID_supported_index_org[i])-1 ][1];
+
+$('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_org[i]+' type="checkbox" > <label class="w3-validate" name="PID_checks" >'+legendTextVal+'</label> </br>').insertBefore( "#saveSelectedPID" );
+  }
+ 
+ }
+ 
 
   $("#numberOfData").change(function(){// when # of Data changed
    refreshChart();
@@ -305,13 +320,7 @@ loadDataAndGraph();
 
     });
 
-	
-	   $("#datepicker").change(function(){//fuction value when change calendar
 
-//offCheck();
-   refreshChart();
-
-    });
 	
 	 $("#saveSelectedPID").click(function(){//save selected PID's
        console.log('save selected PID');
