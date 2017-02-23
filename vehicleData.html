@@ -774,8 +774,8 @@ chart.render();
 
 	
   });
-  
-
+  firebase.database().goOffline();
+console.log('go off');
   
  };
   
@@ -821,7 +821,7 @@ console.log('function NOT today');
  ref.off("child_added", todayGraphRef); 
 ref.once("value", notTodayGraphRef);
 
- setTimeout(function(){  firebase.database().goOffline(); console.log('GoOFF') }, 700);
+// setTimeout(function(){  firebase.database().goOffline(); console.log('GoOFF') }, 700);
 }
 
 
