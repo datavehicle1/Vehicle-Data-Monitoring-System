@@ -68,7 +68,7 @@ input#vehicle_ID {text-transform: uppercase;}
 
    <div class="w3-container w3-light-gray w3-padding-4">
 
-<label>Date: </label> <input   type="text" id="datepicker" onchange="loadGraph()" style="width:100px;" readonly>
+<label>Date: </label> <input   type="text" id="datepicker" style="width:100px;" readonly>
 
 
 <label>Last</label>
@@ -223,6 +223,7 @@ PID_ans += pad(( (parseInt(PID_val[x],2) & parseInt( user_sel_PID[x],2)) ).toStr
 
 appendPIDCheckboxes();
   
+
   //==========================================================================================================<With User Choice PIDS
  for (i = 0; i < PID_supported_var.length; i++) {//store PID_supported_var ***w/ user choice 
 		p=i+1;
@@ -236,7 +237,9 @@ for (i = 0; i < PID_supported_index.length; i++) { //add legend and unit in grap
 var unitVal = PID_var_list[ (PID_supported_index[i])-1 ][0];
 var legendTextVal=PID_var_list[ (PID_supported_index[i])-1 ][1];
 
+
 chart.options.data.push({type: "line",yValueFormatString:unitVal,showInLegend: true,legendText: legendTextVal ,dataPoints: data_var[ PID_supported_index[i]]=[] });
+
 
 
 $( "#"+PID_supported_index[i] ).prop( "checked", true );//check user choice PID's
@@ -266,7 +269,8 @@ console.log('#startRefresh')
 for(var v=0; v<PID_var_list.length;v++)
 {
 if(data_var[PID_supported_index[v]]!=undefined){
-     data_var[PID_supported_index[v]]=[]; 
+     data_var[PID_supported_index[v] ]=[]; 
+	   data_var[PID_supported_index[v] ]=[]; 
 	}
 }
 var chartDataLength = chart.data.length;
@@ -281,9 +285,9 @@ var chartDataLength = chart.data.length;
  
 	
 
- 
  chart.render();
 console.log('#refresh-Chart')
+firebase.database().goOnline();
 loadDataAndGraph();
 }
 
@@ -318,6 +322,9 @@ $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_o
 //offCheck();
    refreshChart();
 
+   
+   
+   
     });
 
 
@@ -704,8 +711,7 @@ var getTime,getRpm,getSpeed;
 function loadGraph(){
 var t0 = performance.now();
 loadLiveData();
- console.log(chart.data.length);
- 
+
 //get Time, Rpm and Speed
 var datePick = $("#datepicker").val().split("/");
 var yy= datePick[2];
@@ -716,8 +722,7 @@ var z=0;
 var NofData= parseInt($( "#numberOfData option:selected" ).val());
 console.log('#no.of Data selected = '+NofData);
 
-var i=data_var[PID_supported_index[0]].length+1;
-console.log(i);
+
 
 chart.options.title.text = mm+" - " +dd+ " - "+yy;
 
@@ -730,45 +735,58 @@ var ref = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/log
 
 
 
-
-
+var todayGraphRef;
 //<-----------------------TODAY
- var todayGraphRef=function(snapshot) {
 
+
+
+todayGraphRef=function(snapshot) {
 
 getTime = snapshot.key;
-
+  
 snapshot.forEach(plotGraph);
 
 i++;
 z=0;
-chart.render();	
+chart.render();
 
 
+
+	
   };
+
   
   //<-----------------------NOT TODAY
+ 
  var notTodayGraphRef=function(snapshotRef) {
 
 
 snapshotRef.forEach(function(childSnapshot) {
-      
+  
+  
 getTime = childSnapshot.key;
-	  
+
 childSnapshot.forEach(plotGraph);
+
 i++;
 z=0;
-chart.render();	
+chart.render();
+
+	
   });
   
- 
+
   
  };
   
+ 
+ 
  var plotGraph = function(item) {//<-------------PLOT GRAPH
+
 
         var yData = item.val();
  
+  
 if(data_var[PID_supported_index[z]]!=undefined){
 
 data_var[PID_supported_index[z]].push({y: yData, x:i ,label: getTime,click: onClick});
@@ -778,28 +796,36 @@ if (data_var[PID_supported_index[z]].length > NofData)
       	{
       data_var[PID_supported_index[z]].shift();
       	}
-	}			
+	}
+
+
+
+	
 z++;
 };
 
 
-  
-ref.on('child_added', todayGraphRef); 
-
-  
-  if(dateUserPick==compDate){
+    if(dateUserPick==compDate){
 //firebase.database().goOnline();
-console.log('function today');
+
+console.log('first ...');
+ref.on("child_added", todayGraphRef);
 
 }
 else
 {
 
+//$( "#container" ).empty();
 console.log('function NOT today');
 
-//ref.once('value', notTodayGraphRef);
-ref.off('child_added', todayGraphRef);
+ ref.off("child_added", todayGraphRef); 
+ref.once("value", notTodayGraphRef);
+
+ setTimeout(function(){  firebase.database().goOffline(); console.log('GoOFF') }, 700);
 }
+
+
+
 
 var t1 = performance.now();
 console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.")
@@ -814,7 +840,7 @@ var delay = 60 * 60 * 1000; // 1 hour in msec
 var start = delay - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
 setTimeout(function doSomething() {//refresh graph every hour
    refreshChart();
-   offCheck();
+   //offCheck();
    // schedule the next tick
    setTimeout(doSomething, delay);
 }, start);
