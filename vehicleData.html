@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+  
     <title>Cloud-Based Vehicle Data Monitoring System</title>
 <link rel="shortcut icon" type="image/png" href="res/icon.png" />
 <style>
@@ -84,6 +84,7 @@ input#vehicle_ID {text-transform: uppercase;}
 
 <button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
  <button class="w3-btn w3-small w3-right w3-hover-blue" onclick="document.getElementById('id01').style.display='block'" >PID</button>
+ <button class="w3-btn w3-small w3-right w3-hover-blue" id='btnStatus' onclick="document.getElementById('id02').style.display='block'" >STATUS</button>
 
 <!--<button class="w3-btn w3-small w3-right w3-ripple w3-teal"  onclick="testT()" style="text-align: center;"><span></span></button>-->
 
@@ -130,6 +131,31 @@ input#vehicle_ID {text-transform: uppercase;}
 
 </form>
    
+ </div>
+</div>
+
+<div id="id02" class="w3-modal">
+ <div class="w3-modal-content w3-card-4 w3-animate-zoom">
+ 
+ <div class="w3-container ">
+  <header class="w3-container w3-blue"> 
+   <span onclick="document.getElementById('id02').style.display='none'" 
+   class="w3-closebtn w3-padding-top">&times;</span>
+   <h2>Vehicle Status</h2>
+  </header>
+
+ 
+     <form id="check_STATUS" class="w3-container w3-card-4 w3-padding-4">
+	 
+  <div class="w3-container" id="statusDiv">
+
+  </div>
+  
+  
+ <button type="button" id="refreshStatus" class="w3-btn w3-left w3-hover-blue">Refresh Vehicle Status</button>
+
+</form>
+   </div> 
  </div>
 </div>
 
@@ -200,6 +226,7 @@ function loadDataAndGraph(){
 PID_ans += pad(( (parseInt(PID_val[x],2) & parseInt( user_sel_PID[x],2)) ).toString(2) ,32); 
  }
 
+ 
 //console.log(setC + setB + setA);
  //console.log((user_sel_PID.split('').reverse().join('') ).toString(2));
 //var PID_fin = parseInt(PID_val,2) & parseInt(user_sel_PID,2);
@@ -223,6 +250,7 @@ PID_ans += pad(( (parseInt(PID_val[x],2) & parseInt( user_sel_PID[x],2)) ).toStr
 
 appendPIDCheckboxes();
   
+   console.log( PID_supported_var);
 
   //==========================================================================================================<With User Choice PIDS
  for (i = 0; i < PID_supported_var.length; i++) {//store PID_supported_var ***w/ user choice 
@@ -232,28 +260,25 @@ appendPIDCheckboxes();
    }
 }
 
+console.log(PID_supported_index)
+var unitVal="";
+var legendTextVal="";
 for (i = 0; i < PID_supported_index.length; i++) { //add legend and unit in graph 
 
-var unitVal = PID_var_list[ (PID_supported_index[i])-1 ][0];
-var legendTextVal=PID_var_list[ (PID_supported_index[i])-1 ][1];
+unitVal = PID_var_list[ (PID_supported_index[i])-1 ][0];
+legendTextVal=PID_var_list[ (PID_supported_index[i])-1 ][1];
 
+//console.log('unit-> '+unitVal+' ::: legend text -> '+legendTextVal+'at what num ?-> '+ (PID_supported_index[i]-1))
 
-chart.options.data.push({type: "line",yValueFormatString:unitVal,showInLegend: true,legendText: legendTextVal ,dataPoints: data_var[ PID_supported_index[i]]=[] });
-
+chart.options.data.push({type: "line",yValueFormatString: unitVal ,showInLegend: true,legendText: legendTextVal ,dataPoints: data_var[ PID_supported_index[i]]=[] });
 
 
 $( "#"+PID_supported_index[i] ).prop( "checked", true );//check user choice PID's
  }
-
- 
-
- 
-
  
  chart.render();
 
  loadGraph();
-
 
 
  } );
@@ -307,7 +332,10 @@ for(i = 0; i<PID_supported_index_org.length;i++){//get pids and append **checkbo
 var unitVal = PID_var_list[ (PID_supported_index_org[i])-1 ][0];
 var legendTextVal=PID_var_list[ (PID_supported_index_org[i])-1 ][1];
 
+
 $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_org[i]+' type="checkbox" > <label class="w3-validate" name="PID_checks" >'+legendTextVal+'</label> </br>').insertBefore( "#saveSelectedPID" );
+  
+  
   }
  
  }
@@ -322,12 +350,29 @@ $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_o
 //offCheck();
    refreshChart();
 
-   
-   
-   
     });
+	
+  $("#btnStatus").click(function(){// get status vehicle
+
+   firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/').update({
+    requestStatus: "true"
+  });
+});
+
+  $("#refreshStatus").click(function(){// refresh status vehicle
+
+   firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/').update({
+    requestStatus: "true"
+  });
+});
 
 
+  $(".w3-closebtn").click(function(){// update status vehicle when modal close
+	
+   firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/').update({//function to write owner in registered_vehicles
+    requestStatus: "false"
+  });
+});
 	
 	 $("#saveSelectedPID").click(function(){//save selected PID's
        console.log('save selected PID');
@@ -531,15 +576,15 @@ $( function() {
  
  
  ///PID_var Dictionary LIST
- PID_var_list = [["N/A","N/A"],
-["N/A","N/A"],
-["N/A","N/A"],
-["###.## %","Calculated Engine Load"],
-["####.## \u2103","Engine Coolant Temperature"],
-["###.## %","Short Term Fuel Trim - Bank 1"],
-["###.## %","Long Term Fuel Trim - Bank 1"],
-["###.## %","Short Term Fuel Trim - Bank 2"],
-["###.## %","Long Term Fuel Trim - Bank 2"],
+ PID_var_list = [["N/A","Status since DTCs cleared"],
+["N/A","DTC that triggered the freeze frame"],
+["N/A","Fuel System Status"],
+["##.## '%'","Calculated Engine Load"],
+["##.# \u2103","Engine Coolant Temperature"],
+["###.## '%'","Short Term Fuel Trim - Bank 1"],
+["###.## '%'","Long Term Fuel Trim - Bank 1"],
+["###.## '%'","Short Term Fuel Trim - Bank 2"],
+["###.## '%'","Long Term Fuel Trim - Bank 2"],
 ["####.## KPa","Fuel Pressure"],
 ["####.## KPa","Intake Manifold Pressure"],
 ["####.## rpm","Engine RPM"],
@@ -547,9 +592,9 @@ $( function() {
 ["####.## deg \u00b0","Timing Advance"],
 ["####.## \u2103","Intake Air Temp"],
 ["####.## g/s","Air Flow Rate (MAF)"],
-["###.## %","Throttle Position"],
-["N/A","N/A"],
-["N/A","N/A"],
+["###.## '%'","Throttle Position"],
+["N/A","Secondary Air Status"],
+["N/A","O2 Sensors Present"],
 ["####.## V","O2: Bank 1 - Sensor 1 Voltage"],
 ["####.## V","O2: Bank 1 - Sensor 2 Voltage"],
 ["####.## V","O2: Bank 1 - Sensor 3 Voltage"],
@@ -558,9 +603,9 @@ $( function() {
 ["####.## V","O2: Bank 2 - Sensor 2 Voltage"],
 ["####.## V","O2: Bank 2 - Sensor 3 Voltage"],
 ["####.## V","O2: Bank 2 - Sensor 4 Voltage"],
-["N/A","N/A"],
-["N/A","N/A"],
-["N/A","N/A"],
+["N/A","OBD Standards Compliance"],
+["N/A","O2 Sensors Present (alternate)"],
+["N/A","Auxiliary input status (power take off)"],
 ["####.## s","Engine Run Time"],
 ["N/A",""],
 ["####.## Km","Distance Traveled with MIL on"],
@@ -574,12 +619,12 @@ $( function() {
 ["####.## V","02 Sensor 6 WR Lambda Voltage"],
 ["####.## V","02 Sensor 7 WR Lambda Voltage"],
 ["####.## V","02 Sensor 8 WR Lambda Voltage"],
-["###.## %","Commanded EGR"],
-["###.## %","EGR Error"],
-["###.## %","Commanded Evaporative Purge"],
-["###.## %","Fuel Level Input"],
-["N/A","N/A"],
-["N/A","N/A"],
+["###.## '%'","Commanded EGR"],
+["###.## '%'","EGR Error"],
+["###.## '%'","Commanded Evaporative Purge"],
+["###.## '%'","Fuel Level Input"],
+["N/A","Number of warm-ups since codes cleared"],
+["N/A","Distance traveled since codes cleared"],
 ["####.## Pa","Evaporative system vapor pressure"],
 ["####.## KPa","Barometric Pressure"],
 ["####.## mA","02 Sensor 1 WR Lambda Current"],
@@ -595,33 +640,33 @@ $( function() {
 ["####.## \u2103","Catalyst Temperature: Bank 1 - Sensor 2"],
 ["####.## \u2103","Catalyst Temperature: Bank 2 - Sensor 2"],
 ["N/A","N/A"],
-["N/A","N/A"],
+["N/A","Monitor status this drive cycle"],
 ["####.## V","Control module voltage"],
-["###.## %","Absolute load value"],
+["###.## '%'","Absolute load value"],
 ["####.## ratio","Commanded equivalence ratio"],
-["###.## %","Relative throttle position"],
+["###.## '%'","Relative throttle position"],
 ["####.## \u2103","Ambient air temperature"],
-["###.## %","Absolute throttle position B"],
-["###.## %","Absolute throttle position C"],
-["###.## %","Accelerator pedal position D"],
-["###.## %","Accelerator pedal position E"],
-["###.## %","Accelerator pedal position F"],
-["###.## %","Commanded throttle actuator"],
+["###.## '%'","Absolute throttle position B"],
+["###.## '%'","Absolute throttle position C"],
+["###.## '%'","Accelerator pedal position D"],
+["###.## '%'","Accelerator pedal position E"],
+["###.## '%'","Accelerator pedal position F"],
+["###.## '%'","Commanded throttle actuator"],
 ["####.## min","Time run with MIL on"],
-["N/A","N/A"],
+["N/A","Time since trouble codes cleared"],
 ["N/A","N/A"],
 ["####.## g/s","Maximum value for mass air flow sensor"],
-["N/A","N/A"],
-["###.## %","Ethanol Fuel Percent"],
+["N/A","Fuel Type"],
+["###.## '%'","Ethanol Fuel Percent"],
 ["####.## KPa","Absolute Evap system Vapor Pressure"],
 ["####.## Pa","Evap system vapor pressure"],
-["###.## %","Short term secondary O2 trim - Bank 1"],
-["###.## %","Long term secondary O2 trim - Bank 1"],
-["###.## %","Short term secondary O2 trim - Bank 2"],
-["###.## %","Long term secondary O2 trim - Bank 2"],
+["###.## '%'","Short term secondary O2 trim - Bank 1"],
+["###.## '%'","Long term secondary O2 trim - Bank 1"],
+["###.## '%'","Short term secondary O2 trim - Bank 2"],
+["###.## '%'","Long term secondary O2 trim - Bank 2"],
 ["####.## KPa","Fuel rail pressure (absolute)"],
-["###.## %","Relative accelerator pedal position"],
-["###.## %","Hybrid battery pack remaining life"],
+["###.## '%'","Relative accelerator pedal position"],
+["###.## '%'","Hybrid battery pack remaining life"],
 ["####.## \u2103","Engine oil temperature"],
 ["####.## deg \u00b0","Fuel injection timing"],
 ["####.## L/h","Engine fuel rate"],
@@ -643,7 +688,7 @@ text: ""
 },
 
  axisX: {  stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]},
-  axisY: {  includeZero: false, stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]},
+  axisY: {   includeZero: false,stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]},
   
  legend: {
  horizontalAlign: "left", // left, center ,right 
@@ -742,14 +787,28 @@ var todayGraphRef;
 
 todayGraphRef=function(snapshot) {
 
-getTime = snapshot.key;
   
-snapshot.forEach(plotGraph);
+getTime = snapshot.key;
+
+for(var z =0 ;z < PID_supported_index.length ; z++){
+
+var yData = snapshot.child(PID_supported_index[z]).val();
+
+data_var[PID_supported_index[z]].push({y: yData, x:i ,label: getTime,click: onClick});
+
+
+if (data_var[PID_supported_index[z]].length > NofData)
+      	{
+      data_var[PID_supported_index[z]].shift();
+      	}
+	}
+	
 
 i++;
-z=0;
 chart.render();
 
+//console.log(data_var)
+  	
 
 
 	
@@ -761,33 +820,38 @@ chart.render();
  var notTodayGraphRef=function(snapshotRef) {
 
 
+  
 snapshotRef.forEach(function(childSnapshot) {
   
   
 getTime = childSnapshot.key;
 
-childSnapshot.forEach(plotGraph);
+//childSnapshot.forEach(plotGraph);
+ref.once("value",plotGraph);
 
 i++;
 z=0;
 chart.render();
 
-	
+//console.log(data_var)
+  	
   });
-  firebase.database().goOffline();
-console.log('go off');
-  
+ 
+firebase.database().goOffline();
+console.log('off');
  };
   
  
  
- var plotGraph = function(item) {//<-------------PLOT GRAPH
-
-
-        var yData = item.val();
+ var plotGraph = function(item){//<-------------PLOT GRAPH
  
- // console.log(item.key);
-if(data_var[PID_supported_index[z]]!=undefined){
+ //.on("child_added", function(snapshot) {
+
+ for(var z =0 ;z < PID_supported_index.length ; z++){
+//if(data_var[PID_supported_index[z]]!=undefined){      		
+//var yData = item.child(getTime).child( PID_supported_index[z] ).val();
+var yData = item.child(getTime).child(PID_supported_index[z]).val();
+  
 
 data_var[PID_supported_index[z]].push({y: yData, x:i ,label: getTime,click: onClick});
 
@@ -796,12 +860,10 @@ if (data_var[PID_supported_index[z]].length > NofData)
       	{
       data_var[PID_supported_index[z]].shift();
       	}
-	}
-
-
-
+	}	
+//	}
 	
-z++;
+//z++;
 };
 
 
@@ -809,8 +871,11 @@ z++;
 //firebase.database().goOnline();
 
 console.log('first ...');
+//ref.once("value", notTodayGraphRef);
+
 ref.on("child_added", todayGraphRef);
 
+//firebase.database().goOnline();
 }
 else
 {
@@ -818,7 +883,6 @@ else
 //$( "#container" ).empty();
 console.log('function NOT today');
 
- ref.off("child_added", todayGraphRef); 
 ref.once("value", notTodayGraphRef);
 
 // setTimeout(function(){  firebase.database().goOffline(); console.log('GoOFF') }, 700);
