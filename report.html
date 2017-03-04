@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Sample FirebaseUI App</title>
+    <title>Cloud-Based Vehicle Data Monitoring System</title>
     <!-- *******************************************************************************************
        * TODO(DEVELOPER): Paste the initialization snippet from:
        * Firebase Console > Overview > Add Firebase to your web app. *
@@ -64,10 +64,14 @@
 						query2.once("value").then(function(snapshot){
 							snapshot.forEach(function(childSnapshot){
 								var key2 = childSnapshot.key;
-								var key2_value = (childSnapshot.val()).split(",").join("<br>");
+								var key2_value = (childSnapshot.val());
+								    var res=key2_value.replace(/[\"[\]"]+/g,''); 
+									res = res.split("''").join('<a target="_blank" href="https://www.google.com/search?q=P1020+Hyundai">search</a>');
+   
+								
 								console.log(key2);
 								
-								$('<tr value="'+key2+'"><td>' + key2 + '</td><td>' + key2_value + '</td></tr>' + '<br>').appendTo('#DTC_DATE');
+								$('<tr value="'+key2+'"><td>' + key2 + '</td><td>' +res + '</td></tr>' + '<br>').appendTo('#DTC_DATE');
 				
 								
 							});
@@ -76,11 +80,16 @@
 					
 					
 						
+				loadChart();
 				
+			var x=0;	
+			var z=0;
 			var i=0;
 			
+			var data_var=[];
 				$("#DTC_DATE").on('click','tr',function(e){
-		        
+		        $('#data_drop_down').empty();
+				
                 e.preventDefault();
 				var checked_radio = $('input[name=rbtnCount]:checked').val();
                 var id = $(this).attr('value');	
@@ -88,41 +97,193 @@
 	            var dates= datex[0].split("-").join("/");
                 console.log(dates);
 				
+				 var errorTime = datex[1];
+				var a = errorTime.split(':'); // split it at the colons
+				var errorTimeSec = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2]); 
+    
+				console.log(errorTimeSec)
+				
+			 //$('#container').empty();
 				
 			   var checks = firebase.database().ref("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/"+dates);
-			   checks.once("value").then(function(snapshot){
+			   checks.once("child_added").then(function(snapshot){
+			  
+			   var timex=snapshot.key;
+			   checks.child(timex).once("value").then(function(snapshot2){
+			   snapshot2.forEach(function(childsnapshot2){
+			      var pid = childsnapshot2.key; 
+				
+				
+				$('#data_drop_down').append('<option value='+pid+'>'+PID_var_list[ pid-1 ][1]+'</option>');
+				
+				chart.options.data.push({type: "line",showInLegend : true ,legendText: PID_var_list[ pid-1 ][1],yValueFormatString: PID_var_list[ pid-1 ][0],dataPoints: data_var[x]=[] });
+				x++;
+		
+			  });
+				
+				//load data here foreach
+				  checks.once("value").then(function(snapshot){
 			   snapshot.forEach(function(childsnapshot){
 			   var timex=childsnapshot.key;
 			   checks.child(timex).once("value").then(function(snapshot2){
-			   console.log(timex);
+			   //console.log(timex);
 			   snapshot2.forEach(function(childsnapshot2){
 			      var pid = childsnapshot2.key; 
 			   var xdatas=childsnapshot2.val();			   
-			   console.log(pid+" : "+xdatas);
-			  
-	
-				//chart.options.data.push({type: "line",yValueFormatString: unitVal ,showInLegend: true,legendText: legendTextVal ,dataPoints: data_var[ PID_supported_index[i]]=[] });
-
+			   //console.log(pid+" : "+xdatas);
+			
+						
+						var b = timex.split(':'); // split it at the colons
+						var markTimeSec = (+b[0]) * 60 * 60 + (+b[1]) * 60 + (+b[2]); 
+    
+							//console.log(markTimeSec);
+							
+							 var diff=Math.abs(markTimeSec - errorTimeSec);
+							//console.log(diff)
+    
+							if(diff <=5){
+									data_var[i].push({y: xdatas, x:z ,label: timex,click: onClick, markerType: "cross", markerColor: "tomato" , markerSize: 10 });
+							}
+							else
+							{
+									data_var[i].push({y: xdatas, x:z ,label: timex,click: onClick});
+							}
+							
 		
-			   
-			   
-			   });
-			   
-			   });
-			   
-			   
-			   });
+			i++;
+			});
+			i=0;
+			   z++;
+		
+			chart.render();
 			   
 }); 
 
+chart.render();
+
 				  });
-				  
-				  
-	
-				  
-				
+				  });
+				  });
+				  });
+				  });
 				 
-				  });
+				 
+var avg_data=[];
+var sum_data=[];
+var datax;
+
+$('#save_avg_chart').click(function(){					//save_avg_chart
+
+var avgChart = new CanvasJS.Chart("avgChart",
+    {
+      title:{
+        text: "Engine RPM"    
+      },
+      animationEnabled: true,
+      axisY: {
+        title: "RPM"
+      },
+      legend: {
+        verticalAlign: "bottom",
+        horizontalAlign: "center"
+      },
+      
+      data: [
+
+      {        
+        type: "column",  
+        showInLegend: true, 
+        legendMarkerColor: "grey",
+        legendText: "day",
+        dataPoints: []
+      }   
+      ]
+ });
+
+//avgChart.options.data[0].dataPoints.push({y: 11, label: "21" });
+var tempDay="";
+var sumAll=0;
+var i=0;
+var v=0;
+var state;
+var arrayx=[];		
+var checked_radio = $('input[name=rbtnCount]:checked').val();
+ var query = firebase.database().ref("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/");
+query.once("value").then(function(snapshotYear){
+			   snapshotYear.forEach(function(childsnapshotYear){
+			   var year=childsnapshotYear.key;
+			   
+				var month="02";//Feb
+				var userData=12;//rpm
+				
+			   query.child(year).child(month).once("value").then(function(snapshotDay){
+			     
+			   snapshotDay.forEach(function(childsnapshotDay){
+			      var day = childsnapshotDay.key; 
+			   
+				query.child(year).child(month).child(day).once("value").then(function(snapshotHour){
+			    
+				console.log(day)
+				arrayx[day]=[];
+				
+			   snapshotHour.forEach(function(childsnapshotHour){
+				
+				var hour = childsnapshotHour.key; 
+			  
+				query.child(year).child(month).child(day).child(hour).once("value").then(function(snapshotData){
+			  // console.log("---"+day+"--"+datax+"--")
+			  state=true;
+datax=snapshotData.child(userData).val();
+			
+			  arrayx[day].push(datax);
+		
+					
+					
+					
+					
+}); 
+
+}); 
+
+
+
+//console.log(sumx(arrayx))
+
+
+}); 
+				
+}); 
+
+
+});  
+				
+				  
+});
+				  
+});
+
+
+function sumx(input){  
+               
+ if (toString.call(input) !== "[object Array]")  
+    return false;  
+        
+            var total =  0;  
+            for(var i=0;i<input.length;i++)  
+              {                    
+                if(isNaN(input[i])){  
+                continue;  
+                 }  
+                  total += Number(input[i]);  
+               }  
+             return total;  
+            }  
+
+	
+});
+				  
+		
+				 });
 				  
           } else {
             // User is signed out.
@@ -136,99 +297,175 @@
         initApp()
       });
 	  
-<!-- Canvas -->	
 
+var chart;
 
-	window.onload = function () {
-		var chart = new CanvasJS.Chart("chartContainer",
-		{
+function loadChart(){//Draw Chart
+chart = new CanvasJS.Chart("container", { 
+zoomEnabled: true,height:300,
+title: {
+text: ""
+},
 
-			title:{
-				text: "Site Traffic",
-				fontSize: 30
-			},
-                        animationEnabled: true,
-			axisX:{
-
-				gridColor: "Silver",
-				tickColor: "silver",
-				valueFormatString: "DD/MMM"
-
-			},                        
-                        toolTip:{
-                          shared:true
-                        },
-			theme: "theme2",
-			axisY: {
-				gridColor: "Silver",
-				tickColor: "silver"
-			},
-			legend:{
-				verticalAlign: "center",
-				horizontalAlign: "right"
-			},
-			data: [
-			{        
-				type: "line",
-				showInLegend: true,
-				lineThickness: 2,
-				name: "Visits",
-				markerType: "square",
-				color: "#F08080",
-				dataPoints: [
-				{ x: new Date(2010,0,3), y: 650 },
-				{ x: new Date(2010,0,5), y: 700 },
-				{ x: new Date(2010,0,7), y: 710 },
-				{ x: new Date(2010,0,9), y: 658 },
-				{ x: new Date(2010,0,11), y: 734 },
-				{ x: new Date(2010,0,13), y: 963 },
-				{ x: new Date(2010,0,15), y: 847 },
-				{ x: new Date(2010,0,17), y: 853 },
-				{ x: new Date(2010,0,19), y: 869 },
-				{ x: new Date(2010,0,21), y: 943 },
-				{ x: new Date(2010,0,23), y: 970 }
-				]
-			},
-			{        
-				type: "line",
-				showInLegend: true,
-				name: "Unique Visits",
-				color: "#20B2AA",
-				lineThickness: 2,
-
-				dataPoints: [
-				{ x: new Date(2010,0,3), y: 510 },
-				{ x: new Date(2010,0,5), y: 560 },
-				{ x: new Date(2010,0,7), y: 540 },
-				{ x: new Date(2010,0,9), y: 558 },
-				{ x: new Date(2010,0,11), y: 544 },
-				{ x: new Date(2010,0,13), y: 693 },
-				{ x: new Date(2010,0,15), y: 657 },
-				{ x: new Date(2010,0,17), y: 663 },
-				{ x: new Date(2010,0,19), y: 639 },
-				{ x: new Date(2010,0,21), y: 673 },
-				{ x: new Date(2010,0,23), y: 660 }
-				]
-			}
-
-			
-			],
-          legend:{
-            cursor:"pointer",
-            itemclick:function(e){
-              if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-              	e.dataSeries.visible = false;
-              }
-              else{
-                e.dataSeries.visible = true;
-              }
-              chart.render();
+ axisX: {  stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]},
+  axisY: {   includeZero: false,stripLines:[{color:"#FF0000",showOnTop: true,labelPlacement:"inside",opacity: .6,labelAlign: "center"}]},
+  
+ legend: {
+ horizontalAlign: "left", // left, center ,right 
+     verticalAlign: "center",  // top, center, bottom
+            cursor: "pointer",
+            itemclick: function (e) {
+                if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                    e.dataSeries.visible = false;
+                } else {
+                    e.dataSeries.visible = true;
+                }
+                e.chart.render();
             }
-          }
-		});
+        },
 
+  animationEnabled: true,
+data: [ ]
+  
+});
+chart.render();
+ }
+ 
+ 
+  function onClick(e) {
+
+ chart.options.axisX.stripLines[0].value = e.dataPoint.x;
+
+chart.options.axisX.stripLines[0].label = e.dataPoint.y;
+
+console.log(e);
+    chart.options.axisY.stripLines[0].value = e.dataPoint.y;
+	chart.render();
+}
+
+function hideAll(){
+for(var x=0;x<chart.data.length;x++)
+{
+ chart.options.data[x].visible = false;
+ 
+}
 chart.render();
 }
+
+function showAll(){
+for(var x=0;x<chart.data.length;x++)
+{
+ chart.options.data[x].visible =true;
+ 
+}
+chart.render();
+}
+
+function loadAvgChart(){
+
+	
+	avgChart.options.data[0].dataPoints.push({y: 807, label: "22"});
+	
+   
+}
+ 
+ ///PID Dictionary LIST
+ PID_var_list = [["N/A","Status"],
+["N/A","DTC that triggered the freeze frame"],
+["N/A","Fuel System Status"],
+["##.## '%'","Calculated Engine Load"],
+["##.# \u2103","Engine Coolant Temperature"],
+["###.## '%'","Short Term Fuel Trim - Bank 1"],
+["###.## '%'","Long Term Fuel Trim - Bank 1"],
+["###.## '%'","Short Term Fuel Trim - Bank 2"],
+["###.## '%'","Long Term Fuel Trim - Bank 2"],
+["####.## KPa","Fuel Pressure"],
+["####.## KPa","Intake Manifold Pressure"],
+["####.## rpm","Engine RPM"],
+["####.## KmH","Vehicle Speed"],
+["####.## deg \u00b0","Timing Advance"],
+["####.## \u2103","Intake Air Temp"],
+["####.## g/s","Air Flow Rate (MAF)"],
+["###.## '%'","Throttle Position"],
+["N/A","Secondary Air Status"],
+["N/A","O2 Sensors Present"],
+["####.## V","O2: Bank 1 - Sensor 1 Voltage"],
+["####.## V","O2: Bank 1 - Sensor 2 Voltage"],
+["####.## V","O2: Bank 1 - Sensor 3 Voltage"],
+["####.## V","O2: Bank 1 - Sensor 4 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 1 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 2 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 3 Voltage"],
+["####.## V","O2: Bank 2 - Sensor 4 Voltage"],
+["N/A","OBD Standards Compliance"],
+["N/A","O2 Sensors Present (alternate)"],
+["N/A","Auxiliary input status (power take off)"],
+["####.## s","Engine Run Time"],
+["N/A",""],
+["####.## Km","Distance Traveled with MIL on"],
+["####.## KPa","Fuel Rail Pressure (relative to vacuum)"],
+["####.## KPa","Fuel Rail Pressure (direct inject)"],
+["####.## V","02 Sensor 1 WR Lambda Voltage"],
+["####.## V","02 Sensor 2 WR Lambda Voltage"],
+["####.## V","02 Sensor 3 WR Lambda Voltage"],
+["####.## V","02 Sensor 4 WR Lambda Voltage"],
+["####.## V","02 Sensor 5 WR Lambda Voltage"],
+["####.## V","02 Sensor 6 WR Lambda Voltage"],
+["####.## V","02 Sensor 7 WR Lambda Voltage"],
+["####.## V","02 Sensor 8 WR Lambda Voltage"],
+["###.## '%'","Commanded EGR"],
+["###.## '%'","EGR Error"],
+["###.## '%'","Commanded Evaporative Purge"],
+["###.## '%'","Fuel Level Input"],
+["N/A","Number of warm-ups since codes cleared"],
+["N/A","Distance traveled since codes cleared"],
+["####.## Pa","Evaporative system vapor pressure"],
+["####.## KPa","Barometric Pressure"],
+["####.## mA","02 Sensor 1 WR Lambda Current"],
+["####.## mA","02 Sensor 2 WR Lambda Current"],
+["####.## mA","02 Sensor 3 WR Lambda Current"],
+["####.## mA","02 Sensor 4 WR Lambda Current"],
+["####.## mA","02 Sensor 5 WR Lambda Current"],
+["####.## mA","02 Sensor 6 WR Lambda Current"],
+["####.## mA","02 Sensor 7 WR Lambda Current"],
+["####.## mA","02 Sensor 8 WR Lambda Current"],
+["####.## \u2103","Catalyst Temperature: Bank 1 - Sensor 1"],
+["####.## \u2103","Catalyst Temperature: Bank 2 - Sensor 1"],
+["####.## \u2103","Catalyst Temperature: Bank 1 - Sensor 2"],
+["####.## \u2103","Catalyst Temperature: Bank 2 - Sensor 2"],
+["N/A","N/A"],
+["N/A","Monitor status this drive cycle"],
+["####.## V","Control module voltage"],
+["###.## '%'","Absolute load value"],
+["####.## ratio","Commanded equivalence ratio"],
+["###.## '%'","Relative throttle position"],
+["####.## \u2103","Ambient air temperature"],
+["###.## '%'","Absolute throttle position B"],
+["###.## '%'","Absolute throttle position C"],
+["###.## '%'","Accelerator pedal position D"],
+["###.## '%'","Accelerator pedal position E"],
+["###.## '%'","Accelerator pedal position F"],
+["###.## '%'","Commanded throttle actuator"],
+["####.## min","Time run with MIL on"],
+["N/A","Time since trouble codes cleared"],
+["N/A","N/A"],
+["####.## g/s","Maximum value for mass air flow sensor"],
+["N/A","Fuel Type"],
+["###.## '%'","Ethanol Fuel Percent"],
+["####.## KPa","Absolute Evap system Vapor Pressure"],
+["####.## Pa","Evap system vapor pressure"],
+["###.## '%'","Short term secondary O2 trim - Bank 1"],
+["###.## '%'","Long term secondary O2 trim - Bank 1"],
+["###.## '%'","Short term secondary O2 trim - Bank 2"],
+["###.## '%'","Long term secondary O2 trim - Bank 2"],
+["####.## KPa","Fuel rail pressure (absolute)"],
+["###.## '%'","Relative accelerator pedal position"],
+["###.## '%'","Hybrid battery pack remaining life"],
+["####.## \u2103","Engine oil temperature"],
+["####.## deg \u00b0","Fuel injection timing"],
+["####.## L/h","Engine fuel rate"],
+["N/A","N/A"],
+["N/A","N/A"]];
 
 
     </script>
@@ -253,9 +490,65 @@ chart.render();
 </table>
 </div>
 
-
- <div id="chartContainer" class="w3-container" style="height: 300px; width: 100%;">
+ <div id="container" class="w3-container" style="height: 300px; width: 100%;">
 </div>
-	
+
+<!--
+ <div id="avgChart" class="w3-container" style="height: 300px; width: 100%;">
+</div>
+
+
+<div id="id01" class="w3-modal">
+ <div class="w3-modal-content w3-card-4 w3-animate-zoom">
+ 
+ <div class="w3-container ">
+  <header class="w3-container w3-blue"> 
+   <span onclick="document.getElementById('id01').style.display='none'" 
+   class="w3-closebtn w3-padding-top">&times;</span>
+   <h2>ADD Average Chart</h2>
+  </header>
+
+   <p class="w3-small" id="PID_vars"></p>
+   </div>
+   
+   
+     <div id="add_chart" class="w3-container w3-card-4 w3-padding-4">
+	 
+		<p>
+		<label>Data</label>
+			<select id="data_drop_down"class="w3-select w3-border">
+			</select>
+		</p>
+  
+		<p>
+		<label>Time</label>
+		<select id="time_drop_down"class="w3-select w3-border">
+		<option value="daily">Daily</option>
+		<option value="monthly">Monthly</option>
+		</select>
+		</p>
+		
+		<p>
+		<label>Style</label>
+      <select id="time_drop_down"class="w3-select w3-border">
+		<option value="Bar">Bar Graph</option>
+		<option value="Pie">Pie Chart</option>
+		</select>
+		</p>
+
+ <button type="button" id="save_avg_chart" class="w3-btn w3-left w3-hover-blue">Save Average Chart</button>
+
+</div>
+   
+ </div>
+</div>
+-->
+
+<button type="button" class="w3-btn w3-hover-indigo" onclick="hideAll()">Hide All</button>
+<button type="button" class="w3-btn w3-hover-indigo" onclick="showAll()">Show All</button>
+
+<!--
+<button class="w3-btn w3-small w3-right w3-hover-blue" onclick="document.getElementById('id01').style.display='block'" >ADD Average Chart</button>
+ -->
   </body>
 </html>
