@@ -78,11 +78,13 @@ input#vehicle_ID {text-transform: uppercase;}
   <option value="180">15 Minutes</option>
  <option value="360">30 Minutes</option>
  <option value="720">1 Hour</option>
+ <option value="17280">24 Hours</option>
 
 </select>
 <label> of Data</label>
 
 <button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
+
  <button class="w3-btn w3-small w3-right w3-hover-blue" onclick="document.getElementById('id01').style.display='block'" >PID</button>
  <button class="w3-btn w3-small w3-right w3-hover-blue" id='btnStatus' onclick="document.getElementById('id02').style.display='block'" >STATUS</button>
 
@@ -96,17 +98,37 @@ input#vehicle_ID {text-transform: uppercase;}
  <div id="temp-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
  <div id="battery-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
 
-</div>
 
+  <div class="w3-col w3-right s4">RPM:
+  <label  id="rpm-val">000</label><label> rpm<label>
+  </div>
+  
+  <div class="w3-col w3-right s4">SPEED:
+  <label id="speed-val">000</label><label> Km/H<label>
+  </div>
+  
+   <div class="w3-col w3-right s4">THROTTLE POSITION:
+  <label id="trot-val">000</label>  <label> %<label>
+  </div>
+  
+   
+     <div class="w3-col w3-right s4">AIR FLOW RATE:
+  <label id="air-val">000</label> <label> grams/sec<label>
+  </div>
+  
+  
+   <div class="w3-col w3-right s4">Check Engine Light: <label  id="checkEngine-val">none</label></div>
+   <div class="w3-col w3-right s4">Trouble Codes count: <label  id="dtcCount-val">none</label></div>
+  
+  </div>
 
 <div class="w3-padding-tiny w3-row">
 
 <div id="container" class="w3-container" >
 </div>
-
 </div>
    
-  
+ 
 
 
 <div id="id01" class="w3-modal">
@@ -142,6 +164,7 @@ input#vehicle_ID {text-transform: uppercase;}
    <span onclick="document.getElementById('id02').style.display='none'" 
    class="w3-closebtn w3-padding-top">&times;</span>
    <h2>Vehicle Status</h2>
+   <h5 id="time_status_update"></h5>
   </header>
 
  
@@ -159,8 +182,20 @@ input#vehicle_ID {text-transform: uppercase;}
  </div>
 </div>
 
+<div id="showAlert" class="w3-container w3-center w3-animate-top">
+   <div class="w3-panel w3-red">
+    <span onclick="this.parentElement.style.display='none'" class="w3-closebtn">&times;</span>
+    <h3>Danger!</h3>
+    <p>Vehicle has Problem see Report</p>
+	<a target="_blank" href="report.html">REPORT</a>
+  </div>
+</div>
+
+
    
 <script>
+$('#showAlert').hide();
+
 var VIN;
 var owner_ID;
 var latestSnapshot = null;
@@ -250,8 +285,7 @@ PID_ans += pad(( (parseInt(PID_val[x],2) & parseInt( user_sel_PID[x],2)) ).toStr
 
 appendPIDCheckboxes();
   
-   console.log( PID_supported_var);
-
+ 
   //==========================================================================================================<With User Choice PIDS
  for (i = 0; i < PID_supported_var.length; i++) {//store PID_supported_var ***w/ user choice 
 		p=i+1;
@@ -260,7 +294,6 @@ appendPIDCheckboxes();
    }
 }
 
-console.log(PID_supported_index)
 var unitVal="";
 var legendTextVal="";
 for (i = 0; i < PID_supported_index.length; i++) { //add legend and unit in graph 
@@ -357,13 +390,55 @@ $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_o
    firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/').update({
     requestStatus: "true"
   });
+  
+  
+  var query = firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/status_data/').orderByKey();
+  query.once("value").then(function(snapshot) {
+    snapshot.forEach(function(childSnapshot) {
+      var key = childSnapshot.key;
+      var childData = childSnapshot.val();
+	  
+	   if(key != "Time status updated"){
+	  $('#statusDiv').append(' <label class="w3-validate" name="status_list" >'+PID_var_list[key-1][1]+': '+childData+' </label></br>');
+}
+else
+{
+ $('#time_status_update').text(key+' : '+childData);
+}
+
+  });
 });
+  
+});
+
 
   $("#refreshStatus").click(function(){// refresh status vehicle
 
    firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/').update({
     requestStatus: "true"
   });
+   $('#statusDiv').empty();
+  
+    var query = firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/status_data/').orderByKey();
+  query.once("value").then(function(snapshot) {
+    snapshot.forEach(function(childSnapshot) {
+      // key will be "ada" the first time and "alan" the second time
+      var key = childSnapshot.key;
+      // childData will be the actual contents of the child
+      var childData = childSnapshot.val();
+
+		   if(key != "Time status updated"){
+	  $('#statusDiv').append(' <label class="w3-validate" name="status_list" >'+PID_var_list[key-1][1]+': '+childData+' </label></br>');
+}
+else
+{
+$('#time_status_update').text(key+' : '+childData);
+}
+		
+  });
+});
+  
+  
 });
 
 
@@ -372,6 +447,8 @@ $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_o
    firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/').update({//function to write owner in registered_vehicles
     requestStatus: "false"
   });
+  $('#statusDiv').empty();
+  
 });
 	
 	 $("#saveSelectedPID").click(function(){//save selected PID's
@@ -409,6 +486,8 @@ $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_o
 	});
 	
 
+	
+	
  function pad(n, width, z) {
   z = z || '0';
   n = n + '';
@@ -576,7 +655,7 @@ $( function() {
  
  
  ///PID_var Dictionary LIST
- PID_var_list = [["N/A","Status since DTCs cleared"],
+ PID_var_list = [["N/A","Status"],
 ["N/A","DTC that triggered the freeze frame"],
 ["N/A","Fuel System Status"],
 ["##.## '%'","Calculated Engine Load"],
@@ -721,26 +800,15 @@ data: [ ]
 }, function(error) {
   console.error('Sign Out Error', error);
 });
-window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/";//redirect to mainpage
+window.location.href = "/fbu";//redirect to mainpage
 
 }
  
-
   function onClick(e) {
 
  chart.options.axisX.stripLines[0].value = e.dataPoint.x;
 
-var unitx;
-
-if(e.dataSeries.legendText=="RPM")
-{
-   unitx=" RPM";
-}
-else if(e.dataSeries.legendText=="Speed")
-{
-unitx=" KmH";
-}
-chart.options.axisX.stripLines[0].label = e.dataPoint.y+unitx;
+chart.options.axisX.stripLines[0].label = e.dataPoint.y;
 
     chart.options.axisY.stripLines[0].value = e.dataPoint.y;
     chart.render();
@@ -977,17 +1045,43 @@ var refLive = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data
  //var arrayTime=[];
  var getT=snapshot.key;
  
+ console.log(getT)
 
  refLive.on("value", function(item) {
 getFuel = item.child(getT).child(47).val();
 getTemp=item.child(getT).child(05).val();  
 getBat=item.child(getT).child(42).val();
-  
+
+
 $myFuelGauge.refresh(getFuel);
 $myTempGauge.refresh(getTemp);
 $myBatteryGauge.refresh(getBat);
+
+$('#rpm-val').text(item.child(getT).child(12).val());
+$('#speed-val').text(item.child(getT).child(13).val());
+
+$('#air-val').text(item.child(getT).child(16).val());
+$('#trot-val').text(item.child(getT).child(17).val());
 });
 
+var refStatusLive = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data/status_live/");
+
+  refStatusLive.on("value",function(snapshot) {
+    
+      var checkEngine = snapshot.child('Check Engine Light').val();
+		var dtcCount = snapshot.child('DTC count').val();
+	  
+	  if(checkEngine=='True'){
+	  $('#showAlert').show();
+	  }
+	  else
+	  {
+	  $('#showAlert').hide();
+	  }
+	  
+	  $('#checkEngine-val').text(checkEngine);
+	  $('#dtcCount-val').text(dtcCount);
+});
 
  
   });
