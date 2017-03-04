@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Sample FirebaseUI App</title>
+    <!-- *******************************************************************************************
+       * TODO(DEVELOPER): Paste the initialization snippet from:
+       * Firebase Console > Overview > Add Firebase to your web app. *
+       ***************************************************************************************** -->
+	   	   <script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
+		   
+
+ <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+  <link rel="stylesheet" href="lib/w3.css">
+
+   <script src="lib/canvasjs.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/jquery.validation/1.15.1/jquery.validate.min.js"></script>
+ 
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyCkzwFVCHoe7Hs1RLsR6AAhMxwCvJWzriM",
+    authDomain: "cbvdmsusers.firebaseapp.com",
+    databaseURL: "https://cbvdmsusers.firebaseio.com",
+    storageBucket: "cbvdmsusers.appspot.com",
+    messagingSenderId: "59734821259"
+  };
+  firebase.initializeApp(config);
+</script>
+
+
+    <script type="text/javascript">
+      initApp = function() {
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            // User is signed in.
+            //http://localhost/fbu/vehicleData.html?userVehicles=MHKM5EE2FHK005573
+			var uid = user.uid;
+			    
+				
+				var query = firebase.database().ref("users/"+uid+"/vehicles/").orderByKey();
+				query.once("value")
+				  .then(function(snapshot) {
+				  
+					snapshot.forEach(function(childSnapshot) {
+					  // key will be "ada" the first time and "alan" the second time
+					  var key = childSnapshot.key;
+					  // childData will be the actual contents of the child
+					  console.log(key);
+					  
+					 
+					  $('<input class="w3-radio" type="radio" name="rbtnCount" value='+key+' checked/>' + key + '<br>').appendTo('#VINS'); 
+				
+					  
+					});
+					
+					$('input[type=radio][name=rbtnCount]').change(function() {
+						$('#DTC_DATE tr:not(:first)').remove();
+						var checked_radio = $('input[name=rbtnCount]:checked').val();
+						console.log(checked_radio);
+						var query2 = firebase.database().ref("users/"+uid+"/vehicles/"+checked_radio+"/data/dtc_data").orderByKey();
+						query2.once("value").then(function(snapshot){
+							snapshot.forEach(function(childSnapshot){
+								var key2 = childSnapshot.key;
+								var key2_value = (childSnapshot.val()).split(",").join("<br>");
+								console.log(key2);
+								
+								$('<tr value="'+key2+'"><td>' + key2 + '</td><td>' + key2_value + '</td></tr>' + '<br>').appendTo('#DTC_DATE');
+				
+								
+							});
+						});
+					});
+					
+					
+						
+				
+			var i=0;
+			
+				$("#DTC_DATE").on('click','tr',function(e){
+		        
+                e.preventDefault();
+				var checked_radio = $('input[name=rbtnCount]:checked').val();
+                var id = $(this).attr('value');	
+	            var datex = id.split("|");
+	            var dates= datex[0].split("-").join("/");
+                console.log(dates);
+				
+				
+			   var checks = firebase.database().ref("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/"+dates);
+			   checks.once("value").then(function(snapshot){
+			   snapshot.forEach(function(childsnapshot){
+			   var timex=childsnapshot.key;
+			   checks.child(timex).once("value").then(function(snapshot2){
+			   console.log(timex);
+			   snapshot2.forEach(function(childsnapshot2){
+			      var pid = childsnapshot2.key; 
+			   var xdatas=childsnapshot2.val();			   
+			   console.log(pid+" : "+xdatas);
+			  
+	
+				//chart.options.data.push({type: "line",yValueFormatString: unitVal ,showInLegend: true,legendText: legendTextVal ,dataPoints: data_var[ PID_supported_index[i]]=[] });
+
+		
+			   
+			   
+			   });
+			   
+			   });
+			   
+			   
+			   });
+			   
+}); 
+
+				  });
+				  
+				  
+	
+				  
+				
+				 
+				  });
+				  
+          } else {
+            // User is signed out.
+          }
+        }, function(error) {
+          console.log(error);
+        });
+      };
+
+      window.addEventListener('load', function() {
+        initApp()
+      });
+	  
+<!-- Canvas -->	
+
+
+	window.onload = function () {
+		var chart = new CanvasJS.Chart("chartContainer",
+		{
+
+			title:{
+				text: "Site Traffic",
+				fontSize: 30
+			},
+                        animationEnabled: true,
+			axisX:{
+
+				gridColor: "Silver",
+				tickColor: "silver",
+				valueFormatString: "DD/MMM"
+
+			},                        
+                        toolTip:{
+                          shared:true
+                        },
+			theme: "theme2",
+			axisY: {
+				gridColor: "Silver",
+				tickColor: "silver"
+			},
+			legend:{
+				verticalAlign: "center",
+				horizontalAlign: "right"
+			},
+			data: [
+			{        
+				type: "line",
+				showInLegend: true,
+				lineThickness: 2,
+				name: "Visits",
+				markerType: "square",
+				color: "#F08080",
+				dataPoints: [
+				{ x: new Date(2010,0,3), y: 650 },
+				{ x: new Date(2010,0,5), y: 700 },
+				{ x: new Date(2010,0,7), y: 710 },
+				{ x: new Date(2010,0,9), y: 658 },
+				{ x: new Date(2010,0,11), y: 734 },
+				{ x: new Date(2010,0,13), y: 963 },
+				{ x: new Date(2010,0,15), y: 847 },
+				{ x: new Date(2010,0,17), y: 853 },
+				{ x: new Date(2010,0,19), y: 869 },
+				{ x: new Date(2010,0,21), y: 943 },
+				{ x: new Date(2010,0,23), y: 970 }
+				]
+			},
+			{        
+				type: "line",
+				showInLegend: true,
+				name: "Unique Visits",
+				color: "#20B2AA",
+				lineThickness: 2,
+
+				dataPoints: [
+				{ x: new Date(2010,0,3), y: 510 },
+				{ x: new Date(2010,0,5), y: 560 },
+				{ x: new Date(2010,0,7), y: 540 },
+				{ x: new Date(2010,0,9), y: 558 },
+				{ x: new Date(2010,0,11), y: 544 },
+				{ x: new Date(2010,0,13), y: 693 },
+				{ x: new Date(2010,0,15), y: 657 },
+				{ x: new Date(2010,0,17), y: 663 },
+				{ x: new Date(2010,0,19), y: 639 },
+				{ x: new Date(2010,0,21), y: 673 },
+				{ x: new Date(2010,0,23), y: 660 }
+				]
+			}
+
+			
+			],
+          legend:{
+            cursor:"pointer",
+            itemclick:function(e){
+              if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+              	e.dataSeries.visible = false;
+              }
+              else{
+                e.dataSeries.visible = true;
+              }
+              chart.render();
+            }
+          }
+		});
+
+chart.render();
+}
+
+
+    </script>
+
+
+  </head>
+  <body>
+    <h1 class="w3-center w3-container w3-teal">STATUS REPORT</h1>
+	
+	
+	<div class="w3-container" id="VINS">
+	
+	<div>
+	
+	<div class="w3-container">
+<table style="width:100%" id="DTC_DATE" border="1"  class="w3-table-all w3-hoverable w3-half" >
+  <tr class="w3-light-grey">
+    <th class="w3-center">Date</th>
+    <th class="w3-center">Status</th> 
+
+  </tr >
+</table>
+</div>
+
+
+ <div id="chartContainer" class="w3-container" style="height: 300px; width: 100%;">
+</div>
+	
+  </body>
+</html>
