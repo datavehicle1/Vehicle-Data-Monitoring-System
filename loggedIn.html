@@ -203,7 +203,7 @@ function signOUT(){//function signout button
 }, function(error) {
   console.error('Sign Out Error', error);
 });
-window.location.href = "/https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/loggedIn.html";//redirect to mainpage
+window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/";//redirect to mainpage
 
 }
 
@@ -367,11 +367,15 @@ function showModalAddVehicle(){
 	</form>
 	
 	<button class="w3-btn w3-hover-indigo" type="button" onclick="signOUT()">Sign Out</button>
-	
+		<button class="w3-btn w3-hover-indigo" type="button" onclick="redirectToREPORT()">REPORT</button>
 	
 	
 	
 	<script>
+		function redirectToREPORT(){
+		window.location.href = "report.html";
+	}
+	
 	  $(function(){
    $('#vehicleID').keypress(function(event){
 
