@@ -187,7 +187,7 @@ input#vehicle_ID {text-transform: uppercase;}
     <span onclick="this.parentElement.style.display='none'" class="w3-closebtn">&times;</span>
     <h3>Danger!</h3>
     <p>Vehicle has Problem see Report</p>
-	<a target="_blank" href="report.html">REPORT</a>
+	<a target="_blank"href='' >REPORT</a>
   </div>
 </div>
 
@@ -220,6 +220,8 @@ var PIDx;
 var temp = parameters[0].split("=");
 VIN = unescape(temp[1]);
 
+
+$("a[href='']").attr('href', "report.html?userVehicles="+VIN )
 
 function getPID_var(){
 
@@ -800,7 +802,7 @@ data: [ ]
 }, function(error) {
   console.error('Sign Out Error', error);
 });
-window.location.href = "/fbu";//redirect to mainpage
+window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/";//redirect to mainpage
 
 }
  
@@ -971,11 +973,13 @@ var now = new Date();
 var delay = 60 * 60 * 1000; // 1 hour in msec
 var start = delay - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
 setTimeout(function doSomething() {//refresh graph every hour
-   refreshChart();
+  location.reload();
    //offCheck();
    // schedule the next tick
    setTimeout(doSomething, delay);
 }, start);
+
+
 //---------------button pause and play------------------------//
  var state = true;
 $("#btnToggleState").text('PAUSE');
@@ -1070,7 +1074,7 @@ var refStatusLive = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+
     
       var checkEngine = snapshot.child('Check Engine Light').val();
 		var dtcCount = snapshot.child('DTC count').val();
-	  
+	  console.log('Vehicle Status: '+checkEngine)
 	  if(checkEngine=='True'){
 	  $('#showAlert').show();
 	  }
