@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <title>Cloud-Based Vehicle Data Monitoring System</title>
+<link rel="shortcut icon" type="image/png" href="res/icon.png" />
+	
+	
     <!-- *******************************************************************************************
        * TODO(DEVELOPER): Paste the initialization snippet from:
        * Firebase Console > Overview > Add Firebase to your web app. *
@@ -30,6 +33,11 @@
   firebase.initializeApp(config);
 </script>
 
+<style>
+tr:hover, tr.selected {
+    background-color: #FFCF8B
+}
+</style>
 
     <script type="text/javascript">
       initApp = function() {
@@ -38,59 +46,150 @@
             // User is signed in.
             //http://localhost/fbu/vehicleData.html?userVehicles=MHKM5EE2FHK005573
 			var uid = user.uid;
-			    
+			    var carName
+				
+					$('#showHide').hide();
+					
+				    var parameters = location.search.substring(1).split("&");
+					var temp = parameters[0].split("=");
+					VIN = unescape(temp[1]);
+					
+					var checkx="";
 				
 				var query = firebase.database().ref("users/"+uid+"/vehicles/").orderByKey();
 				query.once("value")
 				  .then(function(snapshot) {
-				  
+				 
 					snapshot.forEach(function(childSnapshot) {
 					  // key will be "ada" the first time and "alan" the second time
 					  var key = childSnapshot.key;
 					  // childData will be the actual contents of the child
-					  console.log(key);
-					  
+					carName=childSnapshot.child('name').val();
+							
+							if(VIN==key)
+							{
+								console.log(VIN +'=='+key)
+					 $('<input class="w3-radio" type="radio" id="'+key+'" name="rbtnCount" value='+key+' label="'+carName+'"checked/>' + key + ' <label>'+ carName+'</label> <br>').appendTo('#VINS'); 
+								
+								loadDTCTable(key);
+								
+							}
+							else{
+				 $('<input class="w3-radio" type="radio"  id="'+key+'" name="rbtnCount" value='+key+' label="'+carName+'" />' + key + ' <label>'+ carName+'</label> <br>').appendTo('#VINS'); 
+					 }
 					 
-					  $('<input class="w3-radio" type="radio" name="rbtnCount" value='+key+' checked/>' + key + '<br>').appendTo('#VINS'); 
-				
 					  
 					});
+					 
 					
 					$('input[type=radio][name=rbtnCount]').change(function() {
+					refreshChart();
 						$('#DTC_DATE tr:not(:first)').remove();
 						var checked_radio = $('input[name=rbtnCount]:checked').val();
+						loadDTCTable(checked_radio)
+						
+						
+					});
+					
+					function loadDTCTable(checked_radio){
+							var nameCar=$('input[name=rbtnCount]:checked').attr("label");
+							console.log(nameCar)
 						console.log(checked_radio);
+						$('#showHide').hide();
+						
+						
+						
+						refCheck =firebase.database().ref("users/"+uid+"/vehicles/"+checked_radio+"/data/status_live");
+						
+						 refCheck.once("value", function(snapshot) {
+							var checkStatus=snapshot.child('Check Engine Light').val();
+							var v=0;
+						
 						var query2 = firebase.database().ref("users/"+uid+"/vehicles/"+checked_radio+"/data/dtc_data").orderByKey();
 						query2.once("value").then(function(snapshot){
 							snapshot.forEach(function(childSnapshot){
 								var key2 = childSnapshot.key;
 								var key2_value = (childSnapshot.val());
-								    var res=key2_value.replace(/[\"[\]"]+/g,''); 
-									res = res.split("''").join('<a target="_blank" href="https://www.google.com/search?q=P1020+Hyundai">search</a>');
-   
+								    //var res=key2_value.replace(/[\"[\]"]+/g,''); 
+									//res = res.split("''").join('<a target="_blank" href="https://www.google.com/search?q=P1020+Hyundai">search</a>');
+									
+									var res=key2_value.replace(/[\"\[(\)\]"]+/g,''); 
+									res = res.split(",");
+									console.log(res[0])
+									var problems="";
+									for(var x=0;x<res.length/2;x++)
+										{
+										var details=res[(x*2)+1];
+										var DTC=res[x*2];
+										if(details==" ''"){details='search';}
+										problems+= '<a target="_blank" href="https://www.google.com/search?q='+DTC+'+'+nameCar+'"> ('+DTC+" : "+details+')</a> , '
+										}
+									
 								
-								console.log(key2);
+								$('<tr value="'+key2+'" bgcolor="#b3ffb3"><td>' + key2 + '</td><td>' +problems + '</td></tr>' + '<br>').appendTo('#DTC_DATE');
 								
-								$('<tr value="'+key2+'"><td>' + key2 + '</td><td>' +res + '</td></tr>' + '<br>').appendTo('#DTC_DATE');
-				
+								
+								v++;
 								
 							});
+							
+							if(checkStatus=='True'){
+							$('#DTC_DATE tr:last').addClass('w3-deep-orange');
+							}
+							
 						});
-					});
-					
-					
 						
+						
+						});
+						
+						}
+					
+
+
+
+					
 				loadChart();
 				
 			var x=0;	
 			var z=0;
 			var i=0;
 			
+			function refreshChart(){//clear chart then refresh data
+
+//chart.data[0].remove();
+console.log('#startRefresh')
+/*
+for(var v=0; v<PID_var_list.length;v++)
+{
+if(data_var[PID_supported_index[v]]!=undefined){
+     data_var[PID_supported_index[v] ]=[]; 
+	   data_var[PID_supported_index[v] ]=[]; 
+	}
+}*/
+
+var chartDataLength = chart.data.length;
+
+
+ for(var x=0;x<chartDataLength;x++)
+ {
+ chart.data[0].remove();
+ }
+
+ chart.render();
+console.log('#refresh-Chart')
+
+}
+			
 			var data_var=[];
+			//$("#DTC_DATE").click(function() { 
 				$("#DTC_DATE").on('click','tr',function(e){
-		        $('#data_drop_down').empty();
-				
-                e.preventDefault();
+		    	$('#showHide').show();
+						
+				 $(this).addClass("selected").siblings().removeClass("selected");
+				 
+				$('#DTC_DATE tr').prop("disabled",false);
+				 $(this).prop("disabled",true);
+			
 				var checked_radio = $('input[name=rbtnCount]:checked').val();
                 var id = $(this).attr('value');	
 	            var datex = id.split("|");
@@ -99,13 +198,29 @@
 				
 				 var errorTime = datex[1];
 				var a = errorTime.split(':'); // split it at the colons
-				var errorTimeSec = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2]); 
-    
+				var errorTimeSec = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2]);
+				
 				console.log(errorTimeSec)
+				//e.preventDefault();
+				
+				refreshChart();
+				
+				  loadData(checked_radio,dates,errorTimeSec);
+				  
+				  });
+		
+		
+		
+		function loadData(checked_radio,dates,errorTimeSec){
+                
+				
 				
 			 //$('#container').empty();
-				
-			   var checks = firebase.database().ref("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/"+dates);
+				x=0;	
+				z=0;
+				i=0;
+
+			   var checks = firebase.database().ref("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/"+dates);//load labels
 			   checks.once("child_added").then(function(snapshot){
 			  
 			   var timex=snapshot.key;
@@ -142,14 +257,15 @@
 							//console.log(diff)
     
 							if(diff <=5){
-									data_var[i].push({y: xdatas, x:z ,label: timex,click: onClick, markerType: "cross", markerColor: "tomato" , markerSize: 10 });
+									data_var[i].push({y: xdatas, x:z ,label: timex,click: onClick, markerType: "cross",indexLabel: "Error",markerColor: "tomato" , markerSize: 10 });
+									
 							}
 							else
 							{
 									data_var[i].push({y: xdatas, x:z ,label: timex,click: onClick});
+									//console.log(data_var[i]);
 							}
 							
-		
 			i++;
 			});
 			i=0;
@@ -165,7 +281,7 @@ chart.render();
 				  });
 				  });
 				  });
-				  });
+}
 				 
 				 
 var avg_data=[];
@@ -261,24 +377,6 @@ datax=snapshotData.child(userData).val();
 });
 				  
 });
-
-
-function sumx(input){  
-               
- if (toString.call(input) !== "[object Array]")  
-    return false;  
-        
-            var total =  0;  
-            for(var i=0;i<input.length;i++)  
-              {                    
-                if(isNaN(input[i])){  
-                continue;  
-                 }  
-                  total += Number(input[i]);  
-               }  
-             return total;  
-            }  
-
 	
 });
 				  
@@ -338,7 +436,7 @@ chart.render();
 
 chart.options.axisX.stripLines[0].label = e.dataPoint.y;
 
-console.log(e);
+//console.log(e);
     chart.options.axisY.stripLines[0].value = e.dataPoint.y;
 	chart.render();
 }
@@ -481,10 +579,10 @@ function loadAvgChart(){
 	<div>
 	
 	<div class="w3-container">
-<table style="width:100%" id="DTC_DATE" border="1"  class="w3-table-all w3-hoverable w3-half" >
+<table style="width:100%" id="DTC_DATE" border="1"  class="w3-table" >
   <tr class="w3-light-grey">
     <th class="w3-center">Date</th>
-    <th class="w3-center">Status</th> 
+    <th class="w3-center">Data Trouble Codes</th> 
 
   </tr >
 </table>
@@ -544,9 +642,10 @@ function loadAvgChart(){
 </div>
 -->
 
+<div id='showHide'>
 <button type="button" class="w3-btn w3-hover-indigo" onclick="hideAll()">Hide All</button>
 <button type="button" class="w3-btn w3-hover-indigo" onclick="showAll()">Show All</button>
-
+</div>
 <!--
 <button class="w3-btn w3-small w3-right w3-hover-blue" onclick="document.getElementById('id01').style.display='block'" >ADD Average Chart</button>
  -->
