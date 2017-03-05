@@ -60,7 +60,7 @@ if(emailVerified==false){
 }
 
 			
-			writeUserData(uid, displayName, email);//#callfunction write data in firebase after sign-in
+			writeUserData(uid, displayName, email);//#callfunction write data in firebase after sign-in//<-------------------------------------------------------------------------------
 			
 var query = firebase.database().ref("users/"+uid+"/vehicles").orderByKey();//get all users vehicles
 query.once("value")
@@ -68,7 +68,8 @@ query.once("value")
     snapshot.forEach(function(snapshot) {
 			var vehicleID=snapshot.key;
 			var vehicleName=snapshot.child('name').val();		
-			appendVehicleSelector(vehicleID,vehicleName);
+			var plateNumber=snapshot.child('plateNo').val();
+			appendVehicleSelector(vehicleID,vehicleName,plateNumber);
 
  
   });
@@ -133,9 +134,9 @@ var currentdate = new Date();
 	return datetime;
 }
 
-function appendVehicleSelector(vehicleID , vehicleName){
+function appendVehicleSelector(vehicleID , vehicleName,plateNumber){
 
-   var r= $('<div class="w3-row"> <input class="w3-radio"  type="radio" name="userVehicles" value='+vehicleID+' id='+vehicleID+' checked/>  <label class="w3-validate" id='+vehicleID+'_label>'+vehicleID+' | '+vehicleName+'</label>  <button type="button" class="w3-btn w3-tiny" id='+vehicleID+'_edit'+'>EDIT</button> </div>'  );
+   var r= $('<div class="w3-row"> <input class="w3-radio"  type="radio" name="userVehicles" value='+vehicleID+' id='+vehicleID+' checked/>  <label class="w3-validate" id='+vehicleID+'_label>'+vehicleID+' | '+vehicleName+' | '+plateNumber+'</label>  <button type="button" class="w3-btn w3-tiny" id='+vehicleID+'_edit'+'>EDIT</button> </div>'  );
        $("#userVehicles").append(r);
 
 	document.getElementById(vehicleID+'_edit').onclick = function() {
@@ -149,6 +150,7 @@ function appendVehicleSelector(vehicleID , vehicleName){
 	
 	$('#vehicleID').val(vehicleID);//insert value in Vehicle ID for edit
 	$('#vehicleName').val(vehicleName);//insert vehicle Name
+	$('#plateNumber').val(plateNumber);
 
 	};
 	
@@ -167,10 +169,11 @@ query.once("value").then(function(snapshot) {
  console.log(check);
  if(check==false){//if Not ,  Add Vehicle in firebase and append button for selection of vehicles
  
- appendVehicleSelector(VIN , $('#vehicleName').val())
+ appendVehicleSelector(VIN , $('#vehicleName').val() ,  $('#plateNumber').val())
 	   
 	     firebase.database().ref('users/' + uid +'/vehicles/'+ VIN ).update({//function to write user data in firebase 
-	name: $('#vehicleName').val()
+	name: $('#vehicleName').val(),
+	plateNo:$('#plateNumber').val(),
 
   });
   
@@ -222,10 +225,12 @@ function updateVehicleData()//update vehicle function
 $('#vehicleModal').hide(); //Hide Vehicle Modal
 
  firebase.database().ref('users/' + uid+ '/vehicles/'+$('#vehicleID').val() ).update({//function to update vehicle name
-    name: $('#vehicleName').val()
+    name: $('#vehicleName').val(),
+	plateNo: $('#plateNumber').val(),
   });
 
   console.log('#update performed');
+   location.reload();
 }
 
 function deleteVehicleData()
@@ -300,6 +305,7 @@ function showModalAddVehicle(){
 	
 	$('#vehicleID').val('');
 	$('#vehicleName').val('');
+	$('#plateNumber').val('');
 	
 	
 }
@@ -345,7 +351,15 @@ function showModalAddVehicle(){
   <input type="text" class="w3-input"  name="vehicleID" id="vehicleID" placeholder="Vehicle ID Number"  maxlength="17" >
   <p style="padding-top: 5px;">Vehicle Name eg.Toyota Vios</p>
   <input type="text"  class="w3-input" name="vehicleName" id="vehicleName" placeholder="Vehicle Name"  maxlength="30"  >
-  <br><br>
+  
+  <p style="padding-top: 5px;">Vehicle Plate Number</p>
+  <input type="text"  class="w3-input" name="plateNumber" id="plateNumber" placeholder="Plate Number"  maxlength="10"  >
+  
+  
+  
+  
+  <br>
+  <br>
   
   <button type="button" id="addVehicle" class="w3-btn w3-teal" >Add Vehicle</button>
 <button type="button" id="updateVehicle" class="w3-btn w3-teal">Update Vehicle</button>
@@ -373,7 +387,7 @@ function showModalAddVehicle(){
 	
 	<script>
 		function redirectToREPORT(){
-		window.location.href = "https://datavehicle1.github.io/Vehicle-Data-Monitoring-System/report.html";
+		window.location.href = "report.html";
 	}
 	
 	  $(function(){
