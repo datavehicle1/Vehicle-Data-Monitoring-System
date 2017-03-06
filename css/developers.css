@@ -1,0 +1,47 @@
+div#profile-container { display: -webkit-box; display: -ms-flexbox; display: flex; -webkit-box-pack: justify; -ms-flex-pack: justify; justify-content: space-between; }
+div#profile-container figure {
+  display: inline-block;
+  }
+div#profile-container figure div {
+  border-radius: 50%;
+  overflow: hidden;
+  background-blend-mode: luminosity;
+  border: 5px solid #000;
+  width: 10rem; height: 10rem;
+  -webkit-transition: .4s linear;
+  transition: .4s linear;
+  will-change: background-color;
+}
+div#profile-container figure div:hover {
+  border: 8px solid #000;
+  background-color: transparent;
+}
+div#profile-container figcaption {
+  margin-top: 0.3rem;
+  text-align: center;
+}
+.janelle {
+  background: url('../img/janellepic.png') no-repeat center
+    hsl(200,50%,50%);
+  background-size: cover;
+}
+.rydel {
+  background: url('../img/rydelpic.png') no-repeat center
+    hsl(200,50%,50%);
+  background-size: cover;
+}
+.wendil {
+  background: url('../img/rydelpic.png') no-repeat center
+    hsl(200,50%,50%);
+  background-size: cover;
+}
+.anthony {
+  background: url('../img/anthonypic.png') no-repeat center
+    hsl(200,50%,50%);
+  background-size: cover;
+}
+.psyche {
+  background: url('../img/psychepic.png') no-repeat center
+    hsl(200,50%,50%);
+  background-size: cover;
+}
