@@ -125,7 +125,7 @@
         var check = snapshot.exists();
         console.log(check);
         if(check==false){//if Not ,  Add Vehicle in firebase and append button for selection of vehicles
-            appendVehicleSelector(VIN , $('#vehicleName').val() , $('#plateNo').val() )
+            appendVehicleSelector(VIN , $('#vehicleName').val() , ($('#plateNo').val()).toUpperCase() )
 	          firebase.database().ref('users/' + uid +'/vehicles/'+ VIN ).update({//function to write user data in firebase
 	              name: $('#vehicleName').val(),
 				  plateNo: $('#plateNo').val()
