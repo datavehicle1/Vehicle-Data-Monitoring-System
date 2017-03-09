@@ -83,10 +83,12 @@ input#vehicle_ID {text-transform: uppercase;}
 </select>
 <label> of Data</label>
 
-<button class="w3-btn w3-small w3-right w3-ripple w3-teal" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
 
- <button class="w3-btn w3-small w3-right w3-hover-blue" onclick="document.getElementById('id01').style.display='block'" >PID</button>
- <button class="w3-btn w3-small w3-right w3-hover-blue" id='btnStatus' onclick="document.getElementById('id02').style.display='block'" >STATUS</button>
+<button class="w3-margin-left w3-btn w3-small w3-right w3-ripple w3-teal  w3-hover-blue" id='btnToggleState' onclick="pauseState()" style="text-align: center;"><span></span></button>
+
+ <button class="w3-margin-left w3-btn w3-light-blue w3-small w3-right w3-hover-blue" onclick="document.getElementById('id01').style.display='block'" >PID</button>
+ <button class="w3-margin-left w3-btn w3-cyan w3-small w3-right w3-hover-blue" id='btnStatus' onclick="document.getElementById('id02').style.display='block'" >STATUS</button>
+ <button class="w3-margin-left w3-btn w3-blue-grey w3-small w3-right w3-hover-blue" id='btnReport' >REPORT</button>
 
 <!--<button class="w3-btn w3-small w3-right w3-ripple w3-teal"  onclick="testT()" style="text-align: center;"><span></span></button>-->
 
@@ -95,8 +97,10 @@ input#vehicle_ID {text-transform: uppercase;}
    <div class="w3-container w3-white w3-padding-4 w3-row" style="z-index: -1;">
  
  <div id="fuel-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+  <div id="battery-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+  
  <div id="temp-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
- <div id="battery-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
+ <div id="airTemp-gauge" class="w3-col w3-left s4" style="width:100px; height:80px" ></div>
 
 
   <div class="w3-col w3-right s4">RPM:
@@ -222,6 +226,9 @@ VIN = unescape(temp[1]);
 
 
 $("a[href='']").attr('href', "report.html?userVehicles="+VIN )
+
+
+
 
 function getPID_var(){
 
@@ -387,6 +394,11 @@ $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_o
 
     });
 	
+	$("#btnReport").click(function(){
+	//window.location="report.html?userVehicles="+VIN ;
+	window.open("report.html?userVehicles="+VIN,'_blank')
+	});
+	
   $("#btnStatus").click(function(){// get status vehicle
 
    firebase.database().ref('users/'+owner_ID+'/vehicles/'+VIN+'/data/').update({
@@ -401,7 +413,22 @@ $('<input class="w3-check w3-small" name="PID_checks" id='+PID_supported_index_o
       var childData = childSnapshot.val();
 	  
 	   if(key != "Time status updated"){
+	   
+	   if(key==19)
+	{
+		var matches = childData.match(/\(([^)]+)\)/g);
+		$('#statusDiv').append('<label class="w3-validate" name="status_list" >'+PID_var_list[18][1]+' : ')
+		for (var i = 0; i < matches.length; i++) {
+		var str = matches[i];
+		var banks="Bank "+i+" ["+str.substring(1, str.length - 1);
+		 $('#statusDiv').append(banks+'] ');
+		}
+		$('#statusDiv').append('</label>');
+	}
+	else{
 	  $('#statusDiv').append(' <label class="w3-validate" name="status_list" >'+PID_var_list[key-1][1]+': '+childData+' </label></br>');
+	  }
+	  
 }
 else
 {
@@ -430,12 +457,17 @@ else
       var childData = childSnapshot.val();
 
 		   if(key != "Time status updated"){
-	  $('#statusDiv').append(' <label class="w3-validate" name="status_list" >'+PID_var_list[key-1][1]+': '+childData+' </label></br>');
+		   
+		   
+	
+
+	 $('#statusDiv').append(' <label class="w3-validate" name="status_list" >'+PID_var_list[key-1][1]+': '+childData+' </label></br>');
 }
 else
 {
 $('#time_status_update').text(key+' : '+childData);
 }
+
 		
   });
 });
@@ -504,10 +536,11 @@ $('#time_status_update').text(key+' : '+childData);
   var ref = firebase.database().ref("users/"+owner_ID+"/vehicles/"+VIN);//get Vehicle Name
 ref.once("value").then(function(snapshot) {
     var name = snapshot.child("name").val(); 
-$('#vehicleNameHead').text(name);
+	var plateNo = snapshot.child("plateNo").val(); 
+	$('#vehicleNameHead').text(name);
+	$('#vehicleIDHead').text("VIN: "+VIN+" | "+plateNo);
+
   });
-  
-  $('#vehicleIDHead').text("VIN: "+VIN);
   
 
          
@@ -1020,22 +1053,34 @@ levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
     value: getBat,
     min: 0,
     max: 100,
-    //title: "Lone Ranger",
+    title: "Control Module",
 levelColors : [ "#ff0000", "#F27C07","#a9d70b" ],
-    label: "Battery %"
+    label: "Voltage"
   });
   
-   $myTempGauge = new JustGage({
+   $myEngTempGauge = new JustGage({
     id: "temp-gauge",
     value: getTemp,
     min: 0,
     max: 100,
-    //title: "Lone Ranger",
-//unit: "%",
-    label: "Temp. %"
+    title: "ENG Coolant",
+    label: "Temp. \u2103"
+	
   });
   
-var getFuel,getTemp,getBat;
+   $myAirTempGauge = new JustGage({
+    id: "airTemp-gauge",
+    value: getAirTemp,
+    min: 0,
+    max: 100,
+    title: "Intake Air",
+    label: "Temp. \u2103"
+	
+  });
+  
+
+  
+var getFuel,getTemp,getBat,getAirTemp;
 function loadLiveData() {//load live Data
 console.log(owner_ID+"--"+VIN)
 var dateObj = new Date();
@@ -1052,14 +1097,26 @@ var refLive = firebase.database().ref("users/"+owner_ID +"/vehicles/"+VIN+"/data
  console.log(getT)
 
  refLive.on("value", function(item) {
-getFuel = item.child(getT).child(47).val();
-getTemp=item.child(getT).child(05).val();  
-getBat=item.child(getT).child(42).val();
+getFuel = item.child(getT).child(47).val(); 
+getBat=item.child(getT).child(66).val();
+
+getTemp=item.child(getT).child(05).val(); 
+getAirTemp=item.child(getT).child(15).val(); 
+
+if(getFuel==null){$('#fuel-gauge').hide();}
+if(getBat==null){$('#battery-gauge').hide();}
+
+if(getTemp==null){$('#temp-gauge').hide();}
+if(getAirTemp==null){$('#airTemp-gauge').hide();}
 
 
 $myFuelGauge.refresh(getFuel);
-$myTempGauge.refresh(getTemp);
+
 $myBatteryGauge.refresh(getBat);
+
+$myEngTempGauge.refresh(getTemp);
+$myAirTempGauge.refresh(getAirTemp);
+
 
 $('#rpm-val').text(item.child(getT).child(12).val());
 $('#speed-val').text(item.child(getT).child(13).val());

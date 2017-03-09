@@ -59,7 +59,8 @@
               snapshot.forEach(function(snapshot) {
           			var vehicleID=snapshot.key;
           			var vehicleName=snapshot.child('name').val();
-          			appendVehicleSelector(vehicleID,vehicleName);
+					var plateNo=snapshot.child('plateNo').val();
+          			appendVehicleSelector(vehicleID,vehicleName,plateNo);
               });
             });
             user.getToken().then(function(accessToken) {
@@ -98,8 +99,8 @@
       	return datetime;
       }
 
-      function appendVehicleSelector(vehicleID , vehicleName){
-          var r= $('<div class="w3-row"> <input class="w3-radio"  type="radio" name="userVehicles" value='+vehicleID+' id='+vehicleID+' checked/>  <label class="w3-validate" id='+vehicleID+'_label>'+vehicleID+' | '+vehicleName+'</label>  <button type="button" class="w3-btn w3-tiny" id='+vehicleID+'_edit'+'>EDIT</button> </div>'  );
+      function appendVehicleSelector(vehicleID , vehicleName,plateNo){
+          var r= $('<div class="w3-row"> <input class="w3-radio"  type="radio" name="userVehicles" value='+vehicleID+' id='+vehicleID+' checked/>  <label class="w3-validate" id='+vehicleID+'_label>'+vehicleID+' | '+vehicleName+' | '+plateNo+'</label>  <button type="button" class="w3-btn w3-tiny" id='+vehicleID+'_edit'+'>EDIT</button> </div>'  );
           $("#userVehicles").append(r);
 
         	document.getElementById(vehicleID+'_edit').onclick = function() {
@@ -113,6 +114,7 @@
 
         	$('#vehicleID').val(vehicleID);//insert value in Vehicle ID for edit
         	$('#vehicleName').val(vehicleName);//insert vehicle Name
+			$('#plateNo').val(plateNo);//insert vehicle Name
   	     };
        }
 
@@ -123,9 +125,10 @@
         var check = snapshot.exists();
         console.log(check);
         if(check==false){//if Not ,  Add Vehicle in firebase and append button for selection of vehicles
-            appendVehicleSelector(VIN , $('#vehicleName').val())
+            appendVehicleSelector(VIN , $('#vehicleName').val() , $('#plateNo').val() )
 	          firebase.database().ref('users/' + uid +'/vehicles/'+ VIN ).update({//function to write user data in firebase
-	              name: $('#vehicleName').val()
+	              name: $('#vehicleName').val(),
+				  plateNo: $('#plateNo').val()
             });
             firebase.database().ref("users/"+uid+"/vehicles/"+VIN+"/data/").update({//function to user choice pid default to 11111...
               users_choice_PIDs: "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
@@ -156,9 +159,11 @@
       function updateVehicleData(){//update vehicle function
         $('#vehicleModal').hide(); //Hide Vehicle Modal
         firebase.database().ref('users/' + uid+ '/vehicles/'+$('#vehicleID').val() ).update({//function to update vehicle name
-        name: $('#vehicleName').val()
+        name: $('#vehicleName').val(),
+		plateNo: $('#plateNo').val()
         });
         console.log('#update performed');
+		location.reload();		
       }
 
       function deleteVehicleData(){
@@ -210,10 +215,12 @@
 
       	$('#vehicleID').val('');
       	$('#vehicleName').val('');
+		$('#plateNo').val('');
       }
   </script>
   <style>
   	input#vehicleID {text-transform: uppercase;}
+	input#plateNo {text-transform: uppercase;}
   	.error{color: red;}
   </style>
   </head>
@@ -314,13 +321,17 @@
           <h2>Vehicle ID Form</h2>
           <form  id="register-vehicle" method="GET" >
       </div>
-      <p >Vehicle ID Number</p>
-
-
+<p >Vehicle ID Number</p>
 <input type="text" class="w3-input"  name="vehicleID" id="vehicleID" placeholder="Vehicle ID Number"  maxlength="17" >
+
 <p style="padding-top: 5px;">Vehicle Name eg.Toyota Vios</p>
 <input type="text"  class="w3-input" name="vehicleName" id="vehicleName" placeholder="Vehicle Name"  maxlength="30"  >
+
+<p style="padding-top: 5px;">Plate Number eg.ABC123</p>
+<input type="text"  class="w3-input" name="plateNo" id="plateNo" placeholder="Plate Number"  maxlength="8"  >
+
 <br><br>
+
 
 <button type="button" id="addVehicle" class="w3-btn w3-teal" >Add Vehicle</button>
 <button type="button" id="updateVehicle" class="w3-btn w3-teal">Update Vehicle</button>
@@ -343,7 +354,7 @@
 		window.location.href = "report.html";
 	   }
   	  $(function(){
-     $('#vehicleID').keypress(function(event){
+     $("#vehicleID,#plateNo").keypress(function(event){
 
           var ew = event.which;
           if(48 <= ew && ew <= 57)
