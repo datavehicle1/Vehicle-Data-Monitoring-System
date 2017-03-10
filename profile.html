@@ -125,7 +125,7 @@
         var check = snapshot.exists();
         console.log(check);
         if(check==false){//if Not ,  Add Vehicle in firebase and append button for selection of vehicles
-            appendVehicleSelector(VIN , $('#vehicleName').val() , ($('#plateNo').val()).toUpperCase() )
+            appendVehicleSelector(VIN , $('#vehicleName').val() , $('#plateNo').val() )
 	          firebase.database().ref('users/' + uid +'/vehicles/'+ VIN ).update({//function to write user data in firebase
 	              name: $('#vehicleName').val(),
 				  plateNo: $('#plateNo').val()
@@ -298,6 +298,8 @@
           </br>
             <button class="w3-btn w3-teal" type="button" onclick="redirectToREPORT()">REPORT</button>
             <button type="submit" id="readVehicle" class="w3-btn w3-teal" >READ VEHICLE DATA</button>
+			  <button  type="button" onclick="document.getElementById('deviceHelp').style.display='block'" class="w3-btn w3-teal">DEVICE HELP</button>
+
           </form>
         </form>
       </div>
@@ -319,16 +321,22 @@
       <span onclick="document.getElementById('vehicleModal').style.display='none'" class="w3-closebtn">&times;</span>
       <div class="w3-container w3-blue">
           <h2>Vehicle ID Form</h2>
-          <form  id="register-vehicle" method="GET" >
+         
       </div>
-<p >Vehicle ID Number</p>
-<input type="text" class="w3-input"  name="vehicleID" id="vehicleID" placeholder="Vehicle ID Number"  maxlength="17" >
+ <form  id="register-vehicle" method="GET" >
+<p>Vehicle ID Number
+      
+    </p>
+<div class="w3-dropdown-hover" >
+<input type="text" class="w3-input"  name="vehicleID" id="vehicleID" placeholder="Vehicle ID Number"  maxlength="20" required>
+<img class="w3-dropdown-content" src="img/VINpossibleLocation.png" alt="VINLocation" style="width:300px">
+</div>
 
 <p style="padding-top: 5px;">Vehicle Name eg.Toyota Vios</p>
-<input type="text"  class="w3-input" name="vehicleName" id="vehicleName" placeholder="Vehicle Name"  maxlength="30"  >
+<input type="text"  class="w3-input" name="vehicleName" id="vehicleName" placeholder="Vehicle Name"  maxlength="30"  required>
 
 <p style="padding-top: 5px;">Plate Number eg.ABC123</p>
-<input type="text"  class="w3-input" name="plateNo" id="plateNo" placeholder="Plate Number"  maxlength="8"  >
+<input type="text"  class="w3-input" name="plateNo" id="plateNo" placeholder="Plate Number"  maxlength="8"  required>
 
 <br><br>
 
@@ -344,6 +352,24 @@
 </div>
   </div>
 </div>
+
+
+  <div id="deviceHelp" class="w3-modal">
+    <div class="w3-modal-content w3-animate-opacity w3-card-8">
+      <header class="w3-container w3-teal"> 
+        <span onclick="document.getElementById('deviceHelp').style.display='none'" 
+        class="w3-closebtn">&times;</span>
+        <h2>Device Help</h2>
+      </header>
+      <div class="w3-container"  style=" display:inline-block;">
+        <img src="img/pipi.png" alt="piloc" style="width:80%">
+      </div>
+      <footer class="w3-container w3-teal">
+      </footer>
+    </div>
+  </div>
+</div>
+          
 
     <!-- <div id="sign-in-status"></div> -->
 
