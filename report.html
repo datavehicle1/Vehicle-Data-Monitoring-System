@@ -105,6 +105,8 @@ tr:hover, tr.selected {
 							var checkStatus=snapshot.child('Check Engine Light').val();
 							var v=0;
 						
+						
+						
 						var query2 = firebase.database().ref("users/"+uid+"/vehicles/"+checked_radio+"/data/dtc_data").orderByKey();
 						query2.once("value").then(function(snapshot){
 							snapshot.forEach(function(childSnapshot){
@@ -181,6 +183,8 @@ console.log('#refresh-Chart')
 }
 			
 			var data_var=[];
+			var dates="";
+			var errorTimeSec;
 			//$("#DTC_DATE").click(function() { 
 				$("#DTC_DATE").on('click','tr',function(e){
 		    	$('#showHide').show();
@@ -193,20 +197,24 @@ console.log('#refresh-Chart')
 				var checked_radio = $('input[name=rbtnCount]:checked').val();
                 var id = $(this).attr('value');	
 	            var datex = id.split("|");
-	            var dates= datex[0].split("-").join("/");
+	            dates= datex[0].split("-").join("/");
                 console.log(dates);
 				
 				 var errorTime = datex[1];
 				var a = errorTime.split(':'); // split it at the colons
-				var errorTimeSec = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2]);
+				errorTimeSec = (+a[0]) * 60 * 60 + (+a[1]) * 60 + (+a[2]);
 				
 				console.log(errorTimeSec)
 				//e.preventDefault();
 				
 				refreshChart();
-				
+				x=0;	
+				z=0;
+				i=0;				
 				  loadData(checked_radio,dates,errorTimeSec);
-				  
+				
+
+				
 				  });
 		
 		
@@ -216,9 +224,7 @@ console.log('#refresh-Chart')
 				
 				
 			 //$('#container').empty();
-				x=0;	
-				z=0;
-				i=0;
+				
 
 			   var checks = firebase.database().ref("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/"+dates);//load labels
 			   checks.once("child_added").then(function(snapshot){
@@ -279,9 +285,56 @@ chart.render();
 
 				  });
 				  });
+				  
+				  
+				  
 				  });
 				  });
 }
+
+$("#prevDay").click(function(){
+				var checked_radio = $('input[name=rbtnCount]:checked').val();
+			refreshChart();
+				x=0;	
+				z=0;
+				i=0;	
+				console.log(dates)
+				console.log(checked_radio)
+				var datex=dates.split('/')
+				console.log("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/"+datex[0]+"/"+datex[1]+"/"+('0'+(datex[2]-1)))
+				
+				var checks = firebase.database().ref("users/"+uid+ "/vehicles/"+checked_radio+"/data/log_data/"+datex[0]+"/"+datex[1]+"/"+('0'+(datex[2]-1)));//load labels
+				 checks.once("value").then(function(snapshot){
+			   snapshot.forEach(function(childsnapshot){
+			   var timex=childsnapshot.key;
+			   checks.child(timex).once("value").then(function(snapshot2){
+			   //console.log(timex);
+			   snapshot2.forEach(function(childsnapshot2){
+			      var pid = childsnapshot2.key; 
+			   var xdatas=childsnapshot2.val();			   
+			   //console.log(pid+" : "+xdatas);
+			
+						
+									data_var[i].push({y: xdatas, x:z ,label: timex,click: onClick});
+								
+							
+			i++;
+			});
+			i=0;
+			   z++;
+		
+			chart.render();
+			   
+}); 
+
+chart.render();
+
+				  });
+				  });
+				  	
+				    //loadData(checked_radio,dates,errorTimeSec);
+				  
+});
 				 
 				 
 var avg_data=[];
@@ -644,6 +697,7 @@ function loadAvgChart(){
 <div id='showHide'>
 <button type="button" class="w3-btn w3-hover-indigo" onclick="hideAll()">Hide All</button>
 <button type="button" class="w3-btn w3-hover-indigo" onclick="showAll()">Show All</button>
+<!--<button type="button" class="w3-btn w3-hover-indigo" id="prevDay">Load Previous Day</button>-->
 </div>
 
 <div class="w3-container  w3-center w3-light-grey" id="VINS">
